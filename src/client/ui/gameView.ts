@@ -19,6 +19,13 @@ export interface GameViewLog {
   readonly winnerIds: readonly string[] | null;
 }
 
+const PHASE_LABELS: Record<PublicGameState['phase'], string> = {
+  round_setup: '① ラッキーカード挿入フェーズ',
+  round_active: '② めくりフェーズ',
+  round_end: '③ ラウンド精算フェーズ',
+  game_end: '④ 結果発表',
+};
+
 function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
   return names.get(playerId) ?? '(不明なプレイヤー)';
 }
@@ -37,6 +44,11 @@ export function renderGameView(
   const title = document.createElement('h1');
   title.textContent = '🔒 GOTOJAIL!(刑務所に行け!)';
   container.appendChild(title);
+
+  const phaseBadge = document.createElement('div');
+  phaseBadge.className = 'phase-badge';
+  phaseBadge.textContent = PHASE_LABELS[gameState.phase];
+  container.appendChild(phaseBadge);
 
   if (log.winnerIds !== null) {
     const banner = document.createElement('div');
@@ -90,13 +102,15 @@ export function renderGameView(
 
   container.appendChild(header);
 
-  const targets: ChatTarget[] = gameState.players
-    .filter((p) => p.playerId !== selfPlayerId)
-    .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
+  if (gameState.phase !== 'round_setup') {
+    const targets: ChatTarget[] = gameState.players
+      .filter((p) => p.playerId !== selfPlayerId)
+      .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
 
-  const chatContainer = document.createElement('div');
-  renderChat(chatContainer, targets, callbacks);
-  container.appendChild(chatContainer);
+    const chatContainer = document.createElement('div');
+    renderChat(chatContainer, targets, callbacks);
+    container.appendChild(chatContainer);
+  }
 
   if (gameState.phase === 'round_setup') {
     const placementContainer = document.createElement('div');
