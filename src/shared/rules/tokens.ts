@@ -22,14 +22,6 @@ export function moveZone1ToZone2(tokens: PlayerTokens, amount: number): PlayerTo
   return { zone1: clampedZone1 - applied, zone2: tokens.zone2 + applied };
 }
 
-/** 没収: ②から1個を①へ戻す(ペナルティ)。②が0ならなにもしない(0 floor)。 */
-export function applyConfiscation(tokens: PlayerTokens): PlayerTokens {
-  if (tokens.zone2 <= 0) {
-    return tokens;
-  }
-  return { zone1: tokens.zone1 + 1, zone2: tokens.zone2 - 1 };
-}
-
 /** 座(アンティ)の受け取り: ①へamountを加算する(ペナルティ、上限なし)。 */
 export function receiveAntePayout(tokens: PlayerTokens, amount: number): PlayerTokens {
   if (amount <= 0) {

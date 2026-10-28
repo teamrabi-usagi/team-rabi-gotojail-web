@@ -3,7 +3,7 @@
  * カード種別データ(自分/他人の手札の内容)は一切含めない -- それは handsView.ts の責務。
  */
 
-import { TOTAL_ROUNDS, type GameState, type GuardEventLogEntry, type RoundPhase } from './state.js';
+import { TOTAL_ROUNDS, type GameState, type RoundPhase } from './state.js';
 import { pendingLuckyPlacementOwners } from './engine.js';
 
 export interface PublicPlayerGameState {
@@ -22,7 +22,6 @@ export interface PublicGameState {
   readonly bustOrder: readonly string[];
   readonly roundTimerSeconds: number;
   readonly roundEndsAt: number | null;
-  readonly guardEventLog: readonly GuardEventLogEntry[];
   readonly winnerIds: readonly string[] | null;
   /** round_setup中、まだ自分の担当(相手へのラッキー挿入)を終えていないplayerId一覧。 */
   readonly pendingLuckyPlacementOwners: readonly string[];
@@ -46,7 +45,6 @@ export function toPublicGameState(state: GameState): PublicGameState {
     bustOrder: state.bustOrder,
     roundTimerSeconds: state.roundTimerSeconds,
     roundEndsAt: state.roundEndsAt,
-    guardEventLog: state.guardEventLog,
     winnerIds: state.winnerIds,
     pendingLuckyPlacementOwners: pendingLuckyPlacementOwners(state),
   };

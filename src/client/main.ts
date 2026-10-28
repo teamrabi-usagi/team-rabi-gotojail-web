@@ -2,7 +2,7 @@
  * 接続・イベント配線。`room:state`/`game:state`/`game:handsView`を受けて描画を更新する。
  */
 
-import type { ChatMessage, GuardResolvedEvent, PublicRoomState, SelfIdentity } from '../shared/types.js';
+import type { ChatMessage, PublicRoomState, SelfIdentity } from '../shared/types.js';
 import type { PublicGameState } from '../shared/game/publicState.js';
 import type { HandsView } from '../shared/game/handsView.js';
 import type { RoundResolvedSummary } from '../shared/game/state.js';
@@ -22,9 +22,18 @@ let currentGameState: PublicGameState | null = null;
 let currentHandsView: HandsView | null = null;
 let winnerIds: readonly string[] | null = null;
 
-const guardEvents: GuardResolvedEvent[] = [];
 const roundSummaries: RoundResolvedSummary[] = [];
 const chatMessages: ChatMessage[] = [];
+
+function namesMap(): ReadonlyMap<string, string> {
+  const map = new Map<string, string>();
+  if (currentRoom !== null) {
+    for (const p of currentRoom.players) {
+      map.set(p.id, p.name);
+    }
+  }
+  return map;
+}
 
 function showLobbyForm(errorMessage: string | null): void {
   renderLobbyForm(
@@ -64,7 +73,8 @@ function showGameView(): void {
     currentGameState,
     currentHandsView,
     self.playerId,
-    { guardEvents, roundSummaries, chatMessages, winnerIds },
+    namesMap(),
+    { roundSummaries, chatMessages, winnerIds },
     {
       onSubmit: (position) => socket.emit('game:luckyPlacement:submit', { position }),
       onFlip: () => socket.emit('game:flip'),
@@ -124,11 +134,6 @@ socket.on('game:handsView', (handsView) => {
   if (self !== null) {
     render();
   }
-});
-
-socket.on('game:guard:resolved', (event) => {
-  guardEvents.push(event);
-  render();
 });
 
 socket.on('game:round:resolved', (summary) => {

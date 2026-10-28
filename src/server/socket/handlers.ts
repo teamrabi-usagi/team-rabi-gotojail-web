@@ -209,9 +209,6 @@ export function registerSocketHandlers(
         return;
       }
 
-      if (result.guardEvent !== null) {
-        io.to(binding.room.code).emit('game:guard:resolved', result.guardEvent);
-      }
       if (result.roundSummary !== null) {
         io.to(binding.room.code).emit('game:round:resolved', result.roundSummary);
       }

@@ -120,68 +120,106 @@ button.secondary {
   gap: 4px;
 }
 
-.hands-view {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.table-circle {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  margin: 20px auto;
+  border-radius: 50%;
+  background: radial-gradient(circle, #241a13 0%, #1b1410 72%);
+  border: 2px solid #3a2c20;
 }
 
-.hand-row {
-  background: var(--color-panel);
-  border-radius: 10px;
-  padding: 10px;
+.table-seat {
+  position: absolute;
+  width: 48%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 
-.hand-row-label {
+.table-seat-label {
+  display: inline-block;
+  font-size: 0.75rem;
   font-weight: bold;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hand-cards,
+.table-seat.you .table-seat-label {
+  color: var(--color-accent);
+  background: rgba(224, 169, 74, 0.2);
+}
+
+.table-seat-cards,
 .lucky-placement-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .hand-card {
   min-width: 48px;
-  padding: 8px 4px;
+  width: 48px;
+  height: 68px;
   border-radius: 6px;
-  text-align: center;
-  font-size: 0.75rem;
+  overflow: hidden;
   background: #3a2c20;
 }
 
-.hand-card--hidden {
-  background: #15100c;
-  color: #6a5a48;
+.hand-card svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hand-card--mini {
+  min-width: 26px;
+  width: 26px;
+  height: 36px;
+  border-radius: 4px;
 }
 
 .hand-card--pending {
   background: #15100c;
   color: #6a5a48;
-}
-
-.hand-card--bomb {
-  background: var(--color-danger);
-  color: #1b1410;
-}
-
-.hand-card--plain,
-.hand-card--guard {
-  background: var(--color-safe);
-  color: #1b1410;
-}
-
-.hand-card--lucky {
-  background: var(--color-accent);
-  color: #1b1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  width: auto;
+  height: auto;
+  padding: 6px 8px;
 }
 
 .hand-card--flipped {
-  opacity: 0.6;
+  opacity: 0.75;
+}
+
+@keyframes cardDiscard {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  45% {
+    transform: scale(1.3) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.hand-card--discard-anim {
+  animation: cardDiscard 0.5s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .lucky-slot {
@@ -240,15 +278,39 @@ button.secondary {
 
 .chat-form {
   display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.chat-form input {
-  margin-bottom: 0;
-  flex: 1;
+.chat-form-label {
+  font-size: 0.8rem;
+  color: #c9b8a2;
 }
 
-.chat-form button {
+.chat-target-row,
+.chat-count-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-chip {
   width: auto;
+  margin-bottom: 0;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: #3a2c20;
+  color: var(--color-text);
+  border: 1px solid #5a4636;
+}
+
+.chat-chip--active {
+  background: var(--color-accent);
+  color: #1b1410;
+  border-color: var(--color-accent);
+}
+
+.chat-form > button:last-child {
+  margin-top: 4px;
   margin-bottom: 0;
 }

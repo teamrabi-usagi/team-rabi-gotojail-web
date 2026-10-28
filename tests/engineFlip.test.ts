@@ -71,26 +71,6 @@ describe('flipCard', () => {
     }
   });
 
-  it('flipping a guard card triggers a guard event that is applied immediately', () => {
-    // search across seeds for a hand whose first card is a guard card, to exercise the guard draw deterministically
-    for (let seed = 0; seed < 200; seed++) {
-      const { ids, state } = startActiveGame(2, seed);
-      const player = state.players[ids[0] as string]!;
-      if (player.hand![0] !== 'guard') {
-        continue;
-      }
-
-      const result = flipCard(state, ids[0] as string, seededRng(seed + 1000), 0);
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.outcome).toBe('safe');
-      expect(result.guardEvent).not.toBeNull();
-      expect(result.guardEvent?.targetPlayerId).toBeTypeOf('string');
-      return;
-    }
-    throw new Error('no seed produced a guard-first hand within 200 attempts; widen the search range');
-  });
-
   it('rejects flipping after bust', () => {
     const { ids, state } = startActiveGame(2, 5);
     const player = state.players[ids[0] as string]!;

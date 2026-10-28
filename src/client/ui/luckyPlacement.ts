@@ -9,13 +9,7 @@
 import type { HandsView } from '../../shared/game/handsView.js';
 import type { CardKind, PlayerCount } from '../../shared/types.js';
 import { forcedPosition, luckyRecipientSeat } from '../../shared/rules/luckyPlacement.js';
-
-const KIND_LABEL: Record<string, string> = {
-  plain: 'ブランク',
-  guard: '看守',
-  lucky: 'ラッキー',
-  bomb: '爆弾',
-};
+import { cardArtSvg } from './cardArt.js';
 
 export interface LuckyPlacementCallbacks {
   readonly onSubmit: (position: number) => void;
@@ -32,6 +26,7 @@ export function renderLuckyPlacement(
   view: HandsView,
   selfPlayerId: string,
   playerCount: number,
+  names: ReadonlyMap<string, string>,
   callbacks: LuckyPlacementCallbacks,
 ): void {
   container.innerHTML = '';
@@ -50,9 +45,10 @@ export function renderLuckyPlacement(
 
   // 対象の手札は自分のものではないので、round_setup中は常に revealed:true のはず。
   const kinds: CardKind[] = recipientHand.cards.map((c) => (c.revealed ? c.kind : 'bomb'));
+  const recipientName = names.get(recipientHand.playerId) ?? '(不明なプレイヤー)';
 
   const title = document.createElement('div');
-  title.textContent = 'あなたのラッキーカードを、次のプレイヤーの手札に挿入してください';
+  title.textContent = `あなたのラッキーカードを、${recipientName}さんの手札に挿入してください`;
   container.appendChild(title);
 
   const row = document.createElement('div');
@@ -73,7 +69,7 @@ export function renderLuckyPlacement(
   kinds.forEach((kind, idx) => {
     const cardEl = document.createElement('div');
     cardEl.className = `hand-card hand-card--${kind}`;
-    cardEl.textContent = KIND_LABEL[kind] ?? kind;
+    cardEl.innerHTML = cardArtSvg(kind);
     row.appendChild(cardEl);
     row.appendChild(makeSlotButton(idx + 1));
   });

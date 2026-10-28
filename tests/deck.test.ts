@@ -15,26 +15,20 @@ import { seededRng } from './rng.js';
 const PLAYER_COUNTS: readonly PlayerCount[] = [2, 3, 4, 5];
 
 describe('MAIN_POOL_BY_PLAYER_COUNT', () => {
-  it('totals match plainSafe+guardSafe+bomb and 7*n+HIDDEN_COUNT for every player count', () => {
+  it('totals match plainSafe+bomb and 7*n+HIDDEN_COUNT for every player count', () => {
     for (const n of PLAYER_COUNTS) {
       const comp = MAIN_POOL_BY_PLAYER_COUNT[n];
-      expect(comp.plainSafe + comp.guardSafe + comp.bomb).toBe(comp.total);
+      expect(comp.plainSafe + comp.bomb).toBe(comp.total);
       expect(comp.total).toBe(MAIN_HAND_SIZE * n + HIDDEN_COUNT);
     }
   });
 
-  it('guard-marked safe count is exactly 2*n', () => {
-    for (const n of PLAYER_COUNTS) {
-      expect(MAIN_POOL_BY_PLAYER_COUNT[n].guardSafe).toBe(2 * n);
-    }
-  });
-
-  it('matches the exact numbers agreed in the design conversation', () => {
+  it('matches the exact numbers agreed in the design conversation (guard cards merged into plain)', () => {
     expect(MAIN_POOL_BY_PLAYER_COUNT).toEqual({
-      2: { total: 20, plainSafe: 8, guardSafe: 4, bomb: 8 },
-      3: { total: 27, plainSafe: 10, guardSafe: 6, bomb: 11 },
-      4: { total: 34, plainSafe: 12, guardSafe: 8, bomb: 14 },
-      5: { total: 41, plainSafe: 15, guardSafe: 10, bomb: 16 },
+      2: { total: 20, plainSafe: 12, bomb: 8 },
+      3: { total: 27, plainSafe: 16, bomb: 11 },
+      4: { total: 34, plainSafe: 20, bomb: 14 },
+      5: { total: 41, plainSafe: 25, bomb: 16 },
     });
   });
 });
@@ -80,7 +74,6 @@ describe('dealMainPool', () => {
 
       expect(allCards).toHaveLength(mainPoolSizeFor(n));
       expect(allCards.filter((k) => k === 'plain')).toHaveLength(comp.plainSafe);
-      expect(allCards.filter((k) => k === 'guard')).toHaveLength(comp.guardSafe);
       expect(allCards.filter((k) => k === 'bomb')).toHaveLength(comp.bomb);
     }
   });
@@ -94,13 +87,13 @@ describe('dealMainPool', () => {
 
 describe('sortSafeFirst', () => {
   it('moves all bombs to the end while preserving relative order within each side', () => {
-    const input = ['bomb', 'plain', 'bomb', 'guard', 'lucky', 'bomb'] as const;
-    expect(sortSafeFirst(input)).toEqual(['plain', 'guard', 'lucky', 'bomb', 'bomb', 'bomb']);
+    const input = ['bomb', 'plain', 'bomb', 'lucky', 'plain', 'bomb'] as const;
+    expect(sortSafeFirst(input)).toEqual(['plain', 'lucky', 'plain', 'bomb', 'bomb', 'bomb']);
   });
 
   it('is a no-op for an all-safe hand', () => {
-    const input = ['plain', 'guard', 'plain'] as const;
-    expect(sortSafeFirst(input)).toEqual(['plain', 'guard', 'plain']);
+    const input = ['plain', 'lucky', 'plain'] as const;
+    expect(sortSafeFirst(input)).toEqual(['plain', 'lucky', 'plain']);
   });
 
   it('is a no-op for an all-bomb hand', () => {

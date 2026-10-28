@@ -1,54 +1,86 @@
 /**
- * 手札ビュー(`game:handsView`)の描画。Phase 2の範囲。
+ * 手札ビュー(`game:handsView`)の描画。
+ *
+ * 円卓レイアウト: 自分を常に下(6時の位置)に固定し、他プレイヤーを座席順に
+ * 円周上へ配置する。カードはプレースホルダー画像(cardArt.ts)で表示し、
+ * 新たにめくられたカードにだけ「捨てた」アニメーションを1回だけ適用する
+ * (直前との`flippedCount`差分で判定。タイマー等の無関係な再描画では再生しない)。
  */
 
-import type { HandsView } from '../../shared/game/handsView.js';
+import type { HandsView, PlayerHandView } from '../../shared/game/handsView.js';
+import { cardArtSvg } from './cardArt.js';
 
-const KIND_LABEL: Record<string, string> = {
-  plain: 'ブランク',
-  guard: '看守',
-  lucky: 'ラッキー',
-  bomb: '爆弾',
-};
+/** playerId -> 直前に描画したflippedCount。新規めくりの検出にだけ使う。 */
+const lastFlippedCounts = new Map<string, number>();
 
-export function renderHandsView(container: HTMLElement, view: HandsView, selfPlayerId: string): void {
-  container.innerHTML = '';
-  container.className = 'hands-view';
+function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
+  return names.get(playerId) ?? '(不明なプレイヤー)';
+}
 
-  for (const hand of view.hands) {
-    const isSelf = hand.playerId === selfPlayerId;
-
-    const row = document.createElement('div');
-    row.className = 'hand-row';
-
-    const label = document.createElement('div');
-    label.className = 'hand-row-label';
-    label.textContent = `${isSelf ? 'あなた' : hand.playerId}${hand.busted ? '(脱落)' : hand.stopped ? '(停止)' : ''}`;
-    row.appendChild(label);
-
-    const cardsEl = document.createElement('div');
-    cardsEl.className = 'hand-cards';
-
-    if (!hand.handReady) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'hand-card hand-card--pending';
-      placeholder.textContent = `準備中(${hand.cardCount}枚)`;
-      cardsEl.appendChild(placeholder);
-    } else {
-      for (const card of hand.cards) {
-        const cardEl = document.createElement('div');
-        if (card.revealed) {
-          cardEl.className = `hand-card hand-card--${card.kind}${card.flipped ? ' hand-card--flipped' : ''}`;
-          cardEl.textContent = KIND_LABEL[card.kind] ?? card.kind;
-        } else {
-          cardEl.className = 'hand-card hand-card--hidden';
-          cardEl.textContent = '?';
-        }
-        cardsEl.appendChild(cardEl);
-      }
-    }
-
-    row.appendChild(cardsEl);
-    container.appendChild(row);
+function renderCard(view: PlayerHandView['cards'][number], isMini: boolean, justRevealed: boolean): HTMLElement {
+  const el = document.createElement('div');
+  const sizeClass = isMini ? 'hand-card--mini' : '';
+  if (view.revealed) {
+    el.className = `hand-card hand-card--${view.kind} ${sizeClass}${view.flipped ? ' hand-card--flipped' : ''}${justRevealed ? ' hand-card--discard-anim' : ''}`.trim();
+    el.innerHTML = cardArtSvg(view.kind);
+  } else {
+    el.className = `hand-card hand-card--hidden ${sizeClass}`.trim();
+    el.innerHTML = cardArtSvg('hidden');
   }
+  return el;
+}
+
+function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<string, string>): HTMLElement {
+  const seatEl = document.createElement('div');
+  seatEl.className = `table-seat${isSelf ? ' you' : ''}`;
+
+  const label = document.createElement('div');
+  label.className = 'table-seat-label';
+  const statusSuffix = hand.busted ? '(脱落)' : hand.stopped ? '(停止)' : '';
+  label.textContent = `${isSelf ? 'あなた' : nameFor(names, hand.playerId)}${statusSuffix}`;
+  seatEl.appendChild(label);
+
+  const cardsEl = document.createElement('div');
+  cardsEl.className = 'table-seat-cards';
+
+  if (!hand.handReady) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'hand-card hand-card--pending hand-card--mini';
+    placeholder.textContent = `準備中(${hand.cardCount})`;
+    cardsEl.appendChild(placeholder);
+  } else {
+    const prevFlipped = lastFlippedCounts.get(hand.playerId) ?? 0;
+    const newlyRevealedFrom = hand.flippedCount > prevFlipped ? prevFlipped : null;
+    lastFlippedCounts.set(hand.playerId, hand.flippedCount);
+
+    hand.cards.forEach((card, idx) => {
+      const justRevealed = newlyRevealedFrom !== null && idx >= newlyRevealedFrom && idx < hand.flippedCount;
+      cardsEl.appendChild(renderCard(card, true, justRevealed));
+    });
+  }
+
+  seatEl.appendChild(cardsEl);
+  return seatEl;
+}
+
+export function renderHandsView(container: HTMLElement, view: HandsView, selfPlayerId: string, names: ReadonlyMap<string, string>): void {
+  container.innerHTML = '';
+  container.className = 'table-circle';
+
+  const selfIndex = view.hands.findIndex((h) => h.playerId === selfPlayerId);
+  const n = view.hands.length;
+
+  view.hands.forEach((hand, i) => {
+    const isSelf = hand.playerId === selfPlayerId;
+    const seatEl = renderSeat(hand, isSelf, names);
+
+    const offset = selfIndex === -1 ? i : i - selfIndex;
+    const angle = Math.PI / 2 + (2 * Math.PI * offset) / n;
+    const cx = 50 + 40 * Math.cos(angle);
+    const cy = 50 + 40 * Math.sin(angle);
+    seatEl.style.left = `${cx}%`;
+    seatEl.style.top = `${cy}%`;
+
+    container.appendChild(seatEl);
+  });
 }

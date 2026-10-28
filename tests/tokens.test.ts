@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  applyConfiscation,
-  createInitialTokens,
-  moveZone1ToZone2,
-  payAnte,
-  receiveAntePayout,
-} from '../src/shared/rules/tokens.js';
+import { createInitialTokens, moveZone1ToZone2, payAnte, receiveAntePayout } from '../src/shared/rules/tokens.js';
 
 describe('createInitialTokens', () => {
   it('starts with zone1=startingZone1, zone2=0', () => {
@@ -26,16 +20,6 @@ describe('moveZone1ToZone2', () => {
 
   it('clamps at 0 and never goes negative even if amount exceeds zone1 (defensive floor)', () => {
     expect(moveZone1ToZone2({ zone1: 2, zone2: 0 }, 5)).toEqual({ zone1: 0, zone2: 2 });
-  });
-});
-
-describe('applyConfiscation', () => {
-  it('moves exactly 1 from zone2 to zone1', () => {
-    expect(applyConfiscation({ zone1: 20, zone2: 5 })).toEqual({ zone1: 21, zone2: 4 });
-  });
-
-  it('does nothing when zone2 is already 0 (floor at 0, no negative zone2)', () => {
-    expect(applyConfiscation({ zone1: 20, zone2: 0 })).toEqual({ zone1: 20, zone2: 0 });
   });
 });
 

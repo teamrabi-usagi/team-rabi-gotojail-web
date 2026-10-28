@@ -6,21 +6,12 @@
 import type { CardKind } from '../types.js';
 import type { PlayerTokens } from '../rules/tokens.js';
 import type { PlayerRoundProgress } from '../rules/flip.js';
-import type { GuardDeckState } from '../rules/guardDeck.js';
 
 export const TOTAL_ROUNDS = 4;
 export const STARTING_ZONE1 = 25;
 export const ROUND_TIMER_SECONDS = 300;
 
 export type RoundPhase = 'round_setup' | 'round_active' | 'round_end' | 'game_end';
-
-export interface GuardEventLogEntry {
-  readonly drawerPlayerId: string;
-  readonly targetPlayerId: string;
-  readonly zone2Before: number;
-  readonly zone2After: number;
-  readonly flooredAtZero: boolean;
-}
 
 export interface PlayerGameState {
   readonly playerId: string;
@@ -66,15 +57,12 @@ export interface GameState {
   phase: RoundPhase;
   /** 中央の座(アンティ)。ラウンドをまたいで持ち越される。 */
   pot: number;
-  guardDeck: GuardDeckState;
   /** 今ラウンドで実際にbustした順(playerId)。ラウンドごとにリセットする。 */
   bustOrder: string[];
   /** 今ラウンド開始時に使うカウントダウンの長さ(秒)。砂時計の持ち越しルールで変動する。 */
   roundTimerSeconds: number;
   /** round_activeが始まった時点のepoch ms。round_active以外はnull。 */
   roundEndsAt: number | null;
-  /** 今ラウンドの看守イベント履歴(公開)。ラウンドごとにリセットする。 */
-  guardEventLog: GuardEventLogEntry[];
   /** game_endになるまでnull。同率優勝あり。 */
   winnerIds: readonly string[] | null;
 }

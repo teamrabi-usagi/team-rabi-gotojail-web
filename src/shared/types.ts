@@ -13,7 +13,7 @@ export function isPlayerCount(n: number): n is PlayerCount {
 export type Rng = () => number;
 
 /** カード種類。「終了カード」は物理版専用の向き目印でデジタル版には存在しない。 */
-export type CardKind = 'plain' | 'guard' | 'lucky' | 'bomb';
+export type CardKind = 'plain' | 'lucky' | 'bomb';
 
 export function isSafeKind(kind: CardKind): boolean {
   return kind !== 'bomb';
@@ -55,14 +55,6 @@ import type { PublicGameState } from './game/publicState.js';
 import type { HandsView } from './game/handsView.js';
 import type { RoundResolvedSummary } from './game/state.js';
 
-export interface GuardResolvedEvent {
-  readonly drawerPlayerId: string;
-  readonly targetPlayerId: string;
-  readonly zone2Before: number;
-  readonly zone2After: number;
-  readonly flooredAtZero: boolean;
-}
-
 export interface ChatMessage {
   readonly id: string;
   readonly playerId: string;
@@ -103,8 +95,6 @@ export interface ServerToClientEvents {
   /** 本人のsocketへの個別emit限定。`io.to(room).emit`には絶対に載せない(docs/WEB_ARCHITECTURE.md §6)。 */
   'game:handsView': (payload: HandsView) => void;
   'game:error': (payload: { code: string; message: string }) => void;
-  /** ルーム全員へ。看守(没収)カードの効果は完全に公開情報。 */
-  'game:guard:resolved': (payload: GuardResolvedEvent) => void;
   /** ルーム全員へ。ラウンド終了時の①②精算・座精算の一時的な表示用サマリ(GameStateには保存されない)。 */
   'game:round:resolved': (payload: RoundResolvedSummary) => void;
   /** ルーム全員へ。4ラウンド終了時。同率優勝あり。 */

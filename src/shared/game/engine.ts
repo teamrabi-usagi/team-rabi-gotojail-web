@@ -10,9 +10,8 @@ import type { CardKind, PlayerCount, Rng } from '../types.js';
 import { isPlayerCount } from '../types.js';
 import { dealMainPool, sortSafeFirst } from '../rules/deck.js';
 import { forcedPosition, insertLuckyCard, isAllowedPosition, luckyRecipientSeat } from '../rules/luckyPlacement.js';
-import { applyConfiscation, createInitialTokens, payAnte } from '../rules/tokens.js';
+import { createInitialTokens, payAnte } from '../rules/tokens.js';
 import { anteAmountPerPlayer } from '../rules/ante.js';
-import { buildGuardDeck, drawGuardCard } from '../rules/guardDeck.js';
 import { canFlip, createPlayerRoundProgress, flipNext, stopFlipping, type PlayerRoundProgress } from '../rules/flip.js';
 import { resolveRound, type RoundPlayerInput } from '../rules/roundResolution.js';
 import {
@@ -20,7 +19,6 @@ import {
   STARTING_ZONE1,
   TOTAL_ROUNDS,
   type GameState,
-  type GuardEventLogEntry,
   type PlayerGameState,
   type RoundResolvedSummary,
 } from './state.js';
@@ -50,7 +48,7 @@ function getPlayer(state: GameState, playerId: string): PlayerGameState | undefi
 
 /** 新しいGameStateを作り、1ラウンド目のround_setupまで進める。 */
 export function createGameState(playerIds: readonly string[], rng: Rng): GameState {
-  const n = requirePlayerCount(playerIds.length);
+  requirePlayerCount(playerIds.length);
 
   const players: Record<string, PlayerGameState> = {};
   playerIds.forEach((id, seat) => {
@@ -71,11 +69,9 @@ export function createGameState(playerIds: readonly string[], rng: Rng): GameSta
     roundNo: 0,
     phase: 'round_setup',
     pot: 0,
-    guardDeck: buildGuardDeck(n, rng),
     bustOrder: [],
     roundTimerSeconds: ROUND_TIMER_SECONDS,
     roundEndsAt: null,
-    guardEventLog: [],
     winnerIds: null,
   };
 
@@ -90,7 +86,6 @@ export function setupRound(state: GameState, rng: Rng): void {
   state.roundNo += 1;
   state.phase = 'round_setup';
   state.bustOrder = [];
-  state.guardEventLog = [];
   state.roundEndsAt = null;
 
   // 座(アンティ)の収集: 全員①から2個ずつ中央の座へ。持ち越し分に上乗せする。
@@ -171,29 +166,6 @@ export function pendingLuckyPlacementOwners(state: GameState): readonly string[]
     const recipientId = state.playerOrder[recipientSeat] as string;
     return (state.players[recipientId] as PlayerGameState).hand === null;
   });
-}
-
-function drawAndApplyGuardCard(state: GameState, drawerPlayerId: string, rng: Rng): GuardEventLogEntry {
-  const { card, deck } = drawGuardCard(state.guardDeck, rng);
-  state.guardDeck = deck;
-
-  const targetSeat = card.prisonerNumber - 1;
-  const targetPlayerId = state.playerOrder[targetSeat] as string;
-  const target = state.players[targetPlayerId] as PlayerGameState;
-
-  const zone2Before = target.tokens.zone2;
-  target.tokens = applyConfiscation(target.tokens);
-  const zone2After = target.tokens.zone2;
-
-  const entry: GuardEventLogEntry = {
-    drawerPlayerId,
-    targetPlayerId,
-    zone2Before,
-    zone2After,
-    flooredAtZero: zone2Before === 0,
-  };
-  state.guardEventLog.push(entry);
-  return entry;
 }
 
 /** そのプレイヤーが、このラウンドでもう何もすることがない状態(脱落/停止/手札を使い切った)か。 */
@@ -286,7 +258,6 @@ export type FlipCardResult =
       readonly ok: true;
       readonly outcome: 'safe' | 'bomb';
       readonly flippedKind: CardKind;
-      readonly guardEvent: GuardEventLogEntry | null;
       readonly roundSummary: RoundResolvedSummary | null;
     }
   | { readonly ok: false; readonly code: string; readonly message: string };
@@ -308,17 +279,13 @@ export function flipCard(state: GameState, playerId: string, rng: Rng, now: numb
   const flipResult = flipNext(player.progress);
   player.progress = flipResult.progress;
 
-  let guardEvent: GuardEventLogEntry | null = null;
-  if (flipResult.outcome === 'safe' && flipResult.flippedKind === 'guard') {
-    guardEvent = drawAndApplyGuardCard(state, playerId, rng);
-  }
   if (flipResult.outcome === 'bomb') {
     state.bustOrder.push(playerId);
   }
 
   const roundSummary = finishRoundIfReady(state, rng, now, false);
 
-  return { ok: true, outcome: flipResult.outcome, flippedKind: flipResult.flippedKind, guardEvent, roundSummary };
+  return { ok: true, outcome: flipResult.outcome, flippedKind: flipResult.flippedKind, roundSummary };
 }
 
 export type StopResult =

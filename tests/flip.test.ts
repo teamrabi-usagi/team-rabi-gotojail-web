@@ -30,7 +30,7 @@ describe('flipNext', () => {
   });
 
   it('a lucky card contributes 1 itself and arms a x2 bonus for the next safe flip', () => {
-    const hand: readonly CardKind[] = ['lucky', 'plain', 'guard', 'bomb'];
+    const hand: readonly CardKind[] = ['lucky', 'plain', 'plain', 'bomb'];
     let progress = createPlayerRoundProgress(hand);
 
     const afterLucky = flipNext(progress);
@@ -45,8 +45,8 @@ describe('flipNext', () => {
     expect(afterPlain.progress.luckyBonusPending).toBe(false); // bonus consumed, not re-armed by plain
     progress = afterPlain.progress;
 
-    const afterGuard = flipNext(progress);
-    expect(afterGuard.progress.weightedSafeCount).toBe(1 + 2 + 1); // back to normal 1
+    const afterSecondPlain = flipNext(progress);
+    expect(afterSecondPlain.progress.weightedSafeCount).toBe(1 + 2 + 1); // back to normal 1
   });
 
   it('the lucky bonus is lost (not refunded) if the very next flip is a bomb', () => {
@@ -90,7 +90,7 @@ describe('stopFlipping', () => {
 
 describe('remainingSafeCount', () => {
   it('counts only unflipped safe-type cards', () => {
-    const hand: readonly CardKind[] = ['plain', 'guard', 'lucky', 'bomb', 'bomb'];
+    const hand: readonly CardKind[] = ['plain', 'plain', 'lucky', 'bomb', 'bomb'];
     let progress = createPlayerRoundProgress(hand);
     expect(remainingSafeCount(progress)).toBe(3);
 

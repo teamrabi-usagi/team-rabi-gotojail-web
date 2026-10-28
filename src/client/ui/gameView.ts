@@ -4,11 +4,11 @@
 
 import type { PublicGameState } from '../../shared/game/publicState.js';
 import type { HandsView } from '../../shared/game/handsView.js';
-import type { ChatMessage, GuardResolvedEvent } from '../../shared/types.js';
+import type { ChatMessage } from '../../shared/types.js';
 import type { RoundResolvedSummary } from '../../shared/game/state.js';
 import { renderHandsView } from './handsView.js';
 import { renderLuckyPlacement, renderWaitingForOthersLuckyPlacement, type LuckyPlacementCallbacks } from './luckyPlacement.js';
-import { renderChat, type ChatCallbacks } from './chat.js';
+import { renderChat, type ChatCallbacks, type ChatTarget } from './chat.js';
 
 export interface GameViewCallbacks extends LuckyPlacementCallbacks, ChatCallbacks {
   readonly onFlip: () => void;
@@ -16,10 +16,13 @@ export interface GameViewCallbacks extends LuckyPlacementCallbacks, ChatCallback
 }
 
 export interface GameViewLog {
-  readonly guardEvents: readonly GuardResolvedEvent[];
   readonly roundSummaries: readonly RoundResolvedSummary[];
   readonly chatMessages: readonly ChatMessage[];
   readonly winnerIds: readonly string[] | null;
+}
+
+function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
+  return names.get(playerId) ?? '(不明なプレイヤー)';
 }
 
 export function renderGameView(
@@ -27,6 +30,7 @@ export function renderGameView(
   gameState: PublicGameState,
   handsView: HandsView,
   selfPlayerId: string,
+  names: ReadonlyMap<string, string>,
   log: GameViewLog,
   callbacks: GameViewCallbacks,
 ): void {
@@ -40,13 +44,14 @@ export function renderGameView(
     const banner = document.createElement('div');
     banner.className = 'panel game-end-banner';
     const isSelfWinner = log.winnerIds.includes(selfPlayerId);
-    banner.textContent = isSelfWinner ? '🎉 無罪放免!あなたの勝利です!' : `ゲーム終了。勝者: ${log.winnerIds.join(', ')}`;
+    const winnerNames = log.winnerIds.map((id) => (id === selfPlayerId ? 'あなた' : nameFor(names, id))).join(', ');
+    banner.textContent = isSelfWinner ? '🎉 無罪放免!あなたの勝利です!' : `ゲーム終了。勝者: ${winnerNames}`;
     container.appendChild(banner);
     const final = document.createElement('div');
     final.className = 'panel';
     for (const p of gameState.players) {
       const line = document.createElement('div');
-      line.textContent = `${p.playerId === selfPlayerId ? 'あなた' : p.playerId}: 残り刑期①${p.zone1}`;
+      line.textContent = `${p.playerId === selfPlayerId ? 'あなた' : nameFor(names, p.playerId)}: 残り刑期①${p.zone1}`;
       final.appendChild(line);
     }
     container.appendChild(final);
@@ -78,7 +83,8 @@ export function renderGameView(
     const isSelf = p.playerId === selfPlayerId;
     const span = document.createElement('span');
     span.className = isSelf ? 'you' : '';
-    span.textContent = `${isSelf ? 'あなた' : p.playerId}: 残り刑期①${p.zone1} / 自由②${p.zone2}`;
+    const label = isSelf ? 'あなた' : nameFor(names, p.playerId);
+    span.textContent = `${label}(囚人${p.seat + 1}番): 残り刑期①${p.zone1} / 自由②${p.zone2}`;
     li.appendChild(span);
     tokensList.appendChild(li);
   }
@@ -89,7 +95,7 @@ export function renderGameView(
   if (gameState.phase === 'round_setup') {
     const placementContainer = document.createElement('div');
     if (gameState.pendingLuckyPlacementOwners.includes(selfPlayerId)) {
-      renderLuckyPlacement(placementContainer, handsView, selfPlayerId, gameState.players.length, callbacks);
+      renderLuckyPlacement(placementContainer, handsView, selfPlayerId, gameState.players.length, names, callbacks);
     } else {
       renderWaitingForOthersLuckyPlacement(placementContainer, gameState.pendingLuckyPlacementOwners);
     }
@@ -136,26 +142,26 @@ export function renderGameView(
   }
 
   const handsContainer = document.createElement('div');
-  renderHandsView(handsContainer, handsView, selfPlayerId);
+  renderHandsView(handsContainer, handsView, selfPlayerId, names);
   container.appendChild(handsContainer);
 
-  if (log.guardEvents.length > 0 || log.roundSummaries.length > 0) {
+  if (log.roundSummaries.length > 0) {
     const eventLog = document.createElement('div');
     eventLog.className = 'panel event-log';
-    for (const g of log.guardEvents.slice(-3)) {
-      const line = document.createElement('div');
-      line.textContent = `🛡️ 没収: ${g.targetPlayerId}の②から1個が①へ戻されました${g.flooredAtZero ? '(②が0だったため効果なし)' : ''}`;
-      eventLog.appendChild(line);
-    }
     for (const r of log.roundSummaries.slice(-1)) {
       const line = document.createElement('div');
-      line.textContent = `ラウンド${r.roundNo}終了。ラウンド勝者: ${r.roundWinnerIds.join(', ') || 'なし'} / 座の持ち越し: ${r.potCarryOver}個`;
+      const winnerNames = r.roundWinnerIds.map((id) => (id === selfPlayerId ? 'あなた' : nameFor(names, id))).join(', ');
+      line.textContent = `ラウンド${r.roundNo}終了。ラウンド勝者: ${winnerNames || 'なし'} / 座の持ち越し: ${r.potCarryOver}個`;
       eventLog.appendChild(line);
     }
     container.appendChild(eventLog);
   }
 
+  const targets: ChatTarget[] = gameState.players
+    .filter((p) => p.playerId !== selfPlayerId)
+    .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
+
   const chatContainer = document.createElement('div');
-  renderChat(chatContainer, log.chatMessages, selfPlayerId, callbacks);
+  renderChat(chatContainer, log.chatMessages, selfPlayerId, names, targets, callbacks);
   container.appendChild(chatContainer);
 }

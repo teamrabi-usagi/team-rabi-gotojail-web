@@ -39,7 +39,7 @@ describe('forcedPosition', () => {
 });
 
 describe('isValidInsertionPosition / isAllowedPosition', () => {
-  const mixed: CardKind[] = ['plain', 'guard', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+  const mixed: CardKind[] = ['plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
   const allBombs: CardKind[] = ['bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
 
   it('allows 0..7 (INSERTION_SLOT_COUNT slots) for a mixed hand', () => {
@@ -63,9 +63,9 @@ describe('isValidInsertionPosition / isAllowedPosition', () => {
 
 describe('insertLuckyCard', () => {
   it('inserts the lucky card at the given position, growing 7 cards to 8', () => {
-    const seven: CardKind[] = ['plain', 'guard', 'plain', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const seven: CardKind[] = ['plain', 'plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb'];
     const result = insertLuckyCard(seven, 2);
-    expect(result).toEqual(['plain', 'guard', 'lucky', 'plain', 'bomb', 'bomb', 'bomb', 'bomb']);
+    expect(result).toEqual(['plain', 'plain', 'lucky', 'plain', 'bomb', 'bomb', 'bomb', 'bomb']);
     expect(result).toHaveLength(8);
     // does not mutate input
     expect(seven).toHaveLength(7);

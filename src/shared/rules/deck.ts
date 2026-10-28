@@ -17,16 +17,15 @@ export const MAIN_HAND_SIZE = 7;
 interface PoolComposition {
   readonly total: number;
   readonly plainSafe: number;
-  readonly guardSafe: number;
   readonly bomb: number;
 }
 
-/** 人数別のメインプール構成。total = plainSafe + guardSafe + bomb = 7*n + HIDDEN_COUNT。 */
+/** 人数別のメインプール構成。total = plainSafe + bomb = 7*n + HIDDEN_COUNT。 */
 export const MAIN_POOL_BY_PLAYER_COUNT: Readonly<Record<PlayerCount, PoolComposition>> = {
-  2: { total: 20, plainSafe: 8, guardSafe: 4, bomb: 8 },
-  3: { total: 27, plainSafe: 10, guardSafe: 6, bomb: 11 },
-  4: { total: 34, plainSafe: 12, guardSafe: 8, bomb: 14 },
-  5: { total: 41, plainSafe: 15, guardSafe: 10, bomb: 16 },
+  2: { total: 20, plainSafe: 12, bomb: 8 },
+  3: { total: 27, plainSafe: 16, bomb: 11 },
+  4: { total: 34, plainSafe: 20, bomb: 14 },
+  5: { total: 41, plainSafe: 25, bomb: 16 },
 };
 
 export function mainPoolSizeFor(n: PlayerCount): number {
@@ -52,7 +51,6 @@ function buildRawPool(n: PlayerCount): CardKind[] {
   const comp = MAIN_POOL_BY_PLAYER_COUNT[n];
   const pool: CardKind[] = [];
   for (let i = 0; i < comp.plainSafe; i++) pool.push('plain');
-  for (let i = 0; i < comp.guardSafe; i++) pool.push('guard');
   for (let i = 0; i < comp.bomb; i++) pool.push('bomb');
   return pool;
 }
@@ -90,7 +88,7 @@ export function dealMainPool(n: PlayerCount, rng: Rng): DealResult {
 }
 
 /**
- * 安全側(plain/guard)を先に、爆弾を後ろに集める。各側の中の相対順序は
+ * 安全側(plain/lucky)を先に、爆弾を後ろに集める。各側の中の相対順序は
  * (シャッフル済みの)入力の順序をそのまま保持する(安定分割)。
  */
 export function sortSafeFirst(sevenCards: readonly CardKind[]): CardKind[] {

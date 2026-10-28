@@ -56,7 +56,7 @@ Express + Socket.IO  ← サーバー権威。ルールの判定はすべてこ�
 
 ルームごとに1つの`GameState`(`src/shared/game/state.ts`)をin-memoryで保持する。
 host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認し、ルールそのもの
-(カード構成・ラッキー挿入・めくり・看守効果・ラウンド精算)は`src/shared/game/engine.ts`
+(カード構成・ラッキー挿入・めくり・ラウンド精算)は`src/shared/game/engine.ts`
 (とその先の`src/shared/rules/*.ts`)に委譲する。
 
 ### ラウンドタイマー(`src/server/game/roundTimer.ts`)
@@ -92,7 +92,6 @@ host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認�
 | `session:replaced` | 引き継がれた旧socketのみ | 直後に切断 |
 | `game:state` | ルーム全員 | `PublicGameState`。カード種別データは一切含まない |
 | `game:handsView` | **本人のsocketへの個別emit限定** | §5参照。`io.to(room).emit`には絶対に載せない |
-| `game:guard:resolved` | ルーム全員 | 没収カードの効果。完全に公開情報 |
 | `game:round:resolved` | ルーム全員 | ラウンド精算の一時的な表示用サマリ(GameStateには保存されない) |
 | `game:ended` | ルーム全員 | 4ラウンド終了時。同率優勝あり |
 | `chat:message` | ルーム全員 | |

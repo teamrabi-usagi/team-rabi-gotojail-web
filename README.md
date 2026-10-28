@@ -79,7 +79,7 @@ npm run typecheck
 ```
 src/
   shared/     型定義とゲームルールの純粋ロジック(Express/Socket.IO/DOMに依存しない)
-    rules/    deck / luckyPlacement / tokens / ante / guardDeck / flip / roundResolution
+    rules/    deck / luckyPlacement / tokens / ante / flip / roundResolution
     game/     GameState・engine(ラウンド進行〜勝敗判定)・handsView(個別視点マスク)・公開state
   server/     Express + Socket.IO + ルーム管理 + ゲームセッション管理 + ラウンドタイマー
   client/     Vite + Vanilla TypeScript
