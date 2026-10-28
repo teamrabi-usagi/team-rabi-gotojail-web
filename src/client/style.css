@@ -31,37 +31,47 @@ h1 {
   margin: 24px 0;
 }
 
-.phase-badge {
+.phase-stepper {
   position: sticky;
   top: 8px;
   z-index: 50;
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
   width: fit-content;
   margin: -12px auto 16px;
-  padding: 6px 16px;
+}
+
+.phase-step {
+  padding: 6px 12px;
   border-radius: 999px;
-  background: var(--color-accent);
-  color: #1b1410;
+  background: #3a2c20;
+  color: #9a8a76;
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-  transition: background-color 0.4s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-.phase-badge--round_setup {
+.phase-step--active {
+  color: #1b1410;
+}
+
+.phase-step--active.phase-badge--round_setup {
   background: var(--color-accent);
 }
 
-.phase-badge--round_active {
+.phase-step--active.phase-badge--round_active {
   background: var(--color-safe);
 }
 
-.phase-badge--round_end {
+.phase-step--active.phase-badge--round_end {
   background: #d98a3d;
 }
 
-.phase-badge--game_end {
+.phase-step--active.phase-badge--game_end {
   background: #b07cc6;
 }
 
@@ -697,6 +707,28 @@ button.secondary {
 .judge-card-reveal {
   animation: judgeCardReveal 0.45s cubic-bezier(0.34, 1.1, 0.64, 1) both;
   transform-style: preserve-3d;
+}
+
+.judge-card-already-flipped {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.judge-flip-boundary {
+  flex: 0 0 auto;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.6rem;
+  font-weight: bold;
+  color: var(--color-accent);
+  background: rgba(224, 169, 74, 0.15);
+  border-left: 2px dashed var(--color-accent);
+  border-right: 2px dashed var(--color-accent);
+  padding: 3px 2px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
 }
 
 .judge-announcement {

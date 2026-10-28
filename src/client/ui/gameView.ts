@@ -21,11 +21,13 @@ export interface GameViewLog {
   readonly winnerIds: readonly string[] | null;
 }
 
+const PHASE_ORDER: readonly PublicGameState['phase'][] = ['round_setup', 'round_active', 'round_end', 'game_end'];
+
 const PHASE_LABELS: Record<PublicGameState['phase'], string> = {
-  round_setup: '① ラッキーカード挿入フェーズ',
-  round_active: '② めくりフェーズ',
-  round_end: '③ ラウンド精算フェーズ',
-  game_end: '④ 結果発表',
+  round_setup: '①ラッキー挿入',
+  round_active: '②めくり',
+  round_end: '③精算',
+  game_end: '④結果発表',
 };
 
 /** 直前に描画したフェーズ。フェーズが実際に変わった瞬間だけ色フラッシュを出すための判定に使う。 */
@@ -53,10 +55,16 @@ export function renderGameView(
   const phaseChanged = lastRenderedPhase !== null && lastRenderedPhase !== gameState.phase;
   lastRenderedPhase = gameState.phase;
 
-  const phaseBadge = document.createElement('div');
-  phaseBadge.className = `phase-badge phase-badge--${gameState.phase}${phaseChanged ? ' phase-badge--flash' : ''}`;
-  phaseBadge.textContent = PHASE_LABELS[gameState.phase];
-  container.appendChild(phaseBadge);
+  const phaseStepper = document.createElement('div');
+  phaseStepper.className = 'phase-stepper';
+  for (const phase of PHASE_ORDER) {
+    const isActive = phase === gameState.phase;
+    const step = document.createElement('div');
+    step.className = `phase-step${isActive ? ` phase-step--active phase-badge--${phase}${phaseChanged ? ' phase-badge--flash' : ''}` : ''}`;
+    step.textContent = PHASE_LABELS[phase];
+    phaseStepper.appendChild(step);
+  }
+  container.appendChild(phaseStepper);
 
   if (log.winnerIds !== null) {
     renderGameEnd(container, gameState, selfPlayerId, names, log.winnerIds);

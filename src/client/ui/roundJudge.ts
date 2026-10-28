@@ -61,10 +61,22 @@ export function showRoundJudge(
 
     const cardsEl = document.createElement('div');
     cardsEl.className = 'judge-cards';
+
+    const boundaryLabel = p.busted ? '💥 ここで脱落' : 'ここでやめた';
+    const showBoundary = p.flippedCountAtEnd < p.finalHand.length;
+
     p.finalHand.forEach((card, idx) => {
+      if (showBoundary && idx === p.flippedCountAtEnd) {
+        const boundary = document.createElement('div');
+        boundary.className = 'judge-flip-boundary';
+        boundary.textContent = boundaryLabel;
+        cardsEl.appendChild(boundary);
+      }
+
       const cardEl = document.createElement('div');
       const alreadyFlipped = idx < p.flippedCountAtEnd;
-      cardEl.className = `hand-card hand-card--${card.kind} hand-card--mini${alreadyFlipped ? '' : ' judge-card-reveal'}`;
+      cardEl.className =
+        `hand-card hand-card--${card.kind} hand-card--mini${alreadyFlipped ? ' judge-card-already-flipped' : ' judge-card-reveal'}`;
       cardEl.innerHTML = cardArtSvg(card.kind, card.number);
       if (!alreadyFlipped) {
         const delay = REVEAL_START_DELAY + (idx - p.flippedCountAtEnd) * CARD_STAGGER;

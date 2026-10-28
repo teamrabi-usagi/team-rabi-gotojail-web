@@ -44,18 +44,18 @@ export function renderLobbyForm(container: HTMLElement, callbacks: LobbyFormCall
   const joinPanel = document.createElement('div');
   joinPanel.className = 'panel';
 
-  const joinNameInput = document.createElement('input');
-  joinNameInput.type = 'text';
-  joinNameInput.placeholder = '表示名(例: うさぎB)';
-  joinNameInput.maxLength = 20;
-  joinPanel.appendChild(joinNameInput);
-
   const codeInput = document.createElement('input');
   codeInput.type = 'text';
   codeInput.placeholder = 'ルームコード(4文字)';
   codeInput.maxLength = 4;
   codeInput.style.textTransform = 'uppercase';
   joinPanel.appendChild(codeInput);
+
+  const joinNameInput = document.createElement('input');
+  joinNameInput.type = 'text';
+  joinNameInput.placeholder = '表示名(例: うさぎB)';
+  joinNameInput.maxLength = 20;
+  joinPanel.appendChild(joinNameInput);
 
   const joinButton = document.createElement('button');
   joinButton.className = 'secondary';
