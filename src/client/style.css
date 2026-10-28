@@ -1,0 +1,254 @@
+:root {
+  --color-bg: #1b1410;
+  --color-panel: #2a1f18;
+  --color-accent: #e0a94a;
+  --color-text: #f3e9da;
+  --color-danger: #c75c4d;
+  --color-safe: #6fa96f;
+  font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.panel {
+  background: var(--color-panel);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+input[type='text'] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #5a4636;
+  background: #15100c;
+  color: var(--color-text);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: #1b1410;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+.error {
+  color: var(--color-danger);
+  margin-bottom: 8px;
+}
+
+.room-code {
+  font-size: 2rem;
+  letter-spacing: 0.2em;
+  text-align: center;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.player-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #3a2c20;
+}
+
+.player-list .you {
+  color: var(--color-accent);
+}
+
+.player-list .disconnected {
+  opacity: 0.5;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #3a2c20;
+}
+
+.game-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hands-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hand-row {
+  background: var(--color-panel);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.hand-row-label {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.hand-cards,
+.lucky-placement-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.hand-card {
+  min-width: 48px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.75rem;
+  background: #3a2c20;
+}
+
+.hand-card--hidden {
+  background: #15100c;
+  color: #6a5a48;
+}
+
+.hand-card--pending {
+  background: #15100c;
+  color: #6a5a48;
+}
+
+.hand-card--bomb {
+  background: var(--color-danger);
+  color: #1b1410;
+}
+
+.hand-card--plain,
+.hand-card--guard {
+  background: var(--color-safe);
+  color: #1b1410;
+}
+
+.hand-card--lucky {
+  background: var(--color-accent);
+  color: #1b1410;
+}
+
+.hand-card--flipped {
+  opacity: 0.6;
+}
+
+.lucky-slot {
+  width: auto;
+  padding: 8px 6px;
+  margin: 0;
+  background: var(--color-accent);
+}
+
+.lucky-placement-note {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+
+.flip-controls {
+  text-align: center;
+}
+
+.flip-button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.flip-button-row button {
+  margin-bottom: 0;
+}
+
+.event-log {
+  font-size: 0.85rem;
+  color: #c9b8a2;
+}
+
+.game-end-banner {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-accent);
+}
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-messages {
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.chat-form {
+  display: flex;
+  gap: 6px;
+}
+
+.chat-form input {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.chat-form button {
+  width: auto;
+  margin-bottom: 0;
+}

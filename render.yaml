@@ -1,0 +1,30 @@
+# Render Blueprint — GOTOJAIL! Web版を単一のWeb Serviceとして構築するための定義。
+#
+# 構成: Express + Socket.IOサーバーが、ビルド済みViteクライアント(dist/client)を
+# 同一プロセス・同一originで静的配信する「1 Web Service」構成。
+# Redis / Docker / 別frontendサービスは使わない。
+#
+# `DATABASE_URL`環境変数(Neon等の外部無料枠PostgreSQL)を設定すると、ルーム/ゲーム状態を
+# 外部DBへ永続化し、このWeb Service自体のプロセス再起動・sleep/wake・再デプロイをまたいでも
+# 復元できるようになる。未設定の場合はin-memoryのみで動作し、プロセス再起動で
+# ルーム/ゲーム状態が失われる(試作・開発段階ではこれでよい)。
+#
+# 現在は試作・開発段階のため free plan を明示する。将来、安定稼働・常時起動等が
+# 必要になった場合は、運用者がRender側で有料planへ変更する。
+
+services:
+  - name: gotojail-web
+    type: web
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      # 外部の無料枠PostgreSQL(Neon等)への接続文字列。未設定ならin-memoryのみで動作する
+      # (durable persistenceは無効のまま)。値はRenderダッシュボード側で手動設定する
+      # (`sync: false` = このファイルには値を書かない。秘密情報)。
+      - key: DATABASE_URL
+        sync: false
