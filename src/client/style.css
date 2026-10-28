@@ -189,10 +189,13 @@ button.secondary {
 
 .table-seat-cards {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 3px;
+  width: max-content;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .lucky-placement-row {
