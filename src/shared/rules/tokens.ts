@@ -29,10 +29,3 @@ export function receiveAntePayout(tokens: PlayerTokens, amount: number): PlayerT
   }
   return { zone1: tokens.zone1 + amount, zone2: tokens.zone2 };
 }
-
-/** 座(アンティ)の支払い: ①からamountを中央の座へ出す。 */
-export function payAnte(tokens: PlayerTokens, amount: number): PlayerTokens {
-  const clampedZone1 = Math.max(tokens.zone1, 0);
-  const applied = Math.min(amount, clampedZone1);
-  return { zone1: clampedZone1 - applied, zone2: tokens.zone2 };
-}

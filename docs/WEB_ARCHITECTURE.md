@@ -96,7 +96,7 @@ host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認�
 | `game:guardEvent:triggered` | ルーム全員 | 看守付きブランクがめくられ、進行が一時停止したことの公開イベント |
 | `game:guardEvent:resolved` | ルーム全員 | 対象者が回答し、タイマーが再開したことの公開イベント |
 | `game:round:resolved` | ルーム全員 | ラウンド精算の一時的な表示用サマリ(GameStateには保存されない)。各プレイヤーの`finalHand`(そのラウンドの最終8枚、自分の分も含む)を一斉公開演出用に含む |
-| `game:ended` | ルーム全員 | 4ラウンド終了時。同率優勝あり |
+| `game:ended` | ルーム全員 | ①=0に最初に到達した時点、または4ラウンド終了時(フォールバック)。同率優勝あり |
 | `chat:message` | ルーム全員 | |
 
 ## 5. 個別視点の手札ビュー(`src/shared/game/handsView.ts`)— 最重要

@@ -32,12 +32,12 @@ describe('MAIN_POOL_BY_PLAYER_COUNT', () => {
     expect(MAIN_POOL_BY_PLAYER_COUNT[5].guardSafe).toBe(5);
   });
 
-  it('matches the exact numbers agreed in the design conversation', () => {
+  it('matches the exact numbers agreed in the design conversation (safe:bomb ~= 1:1)', () => {
     expect(MAIN_POOL_BY_PLAYER_COUNT).toEqual({
-      2: { total: 20, plainSafe: 12, guardSafe: 0, bomb: 8 },
-      3: { total: 27, plainSafe: 11, guardSafe: 5, bomb: 11 },
-      4: { total: 34, plainSafe: 15, guardSafe: 5, bomb: 14 },
-      5: { total: 41, plainSafe: 20, guardSafe: 5, bomb: 16 },
+      2: { total: 20, plainSafe: 10, guardSafe: 0, bomb: 10 },
+      3: { total: 27, plainSafe: 8, guardSafe: 5, bomb: 14 },
+      4: { total: 34, plainSafe: 12, guardSafe: 5, bomb: 17 },
+      5: { total: 41, plainSafe: 15, guardSafe: 5, bomb: 21 },
     });
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGameState, flipCard, respondToGuardEvent, stop, submitLuckyPlacement } from '../src/shared/game/engine.js';
 import { forcedPosition } from '../src/shared/rules/luckyPlacement.js';
+import { remainingSafeCount } from '../src/shared/rules/flip.js';
 import { seededRng } from './rng.js';
 
 function makePlayerIds(n: number): string[] {
@@ -164,6 +165,40 @@ describe('game end after TOTAL_ROUNDS', () => {
         expect(state.winnerIds?.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('instant win when zone1 reaches 0', () => {
+  it('ends the game immediately once the round-winner bonus brings someone to zone1=0, before the 4-round cap', () => {
+    const { ids, state } = startActiveGame(2, 50);
+
+    // Round winner(s) = survivors with the fewest remaining safe cards. Since neither
+    // player flips before stopping, this is whoever's dealt hand happens to have fewer
+    // safe cards (not necessarily a tie) -- compute it rather than assuming, so the test
+    // holds regardless of what this seed actually deals.
+    const counts = ids.map((id) => remainingSafeCount(state.players[id as string]!.progress!));
+    const minCount = Math.min(...counts);
+    const roundWinnerIds = ids.filter((_, i) => counts[i] === minCount) as string[];
+
+    // give every prospective round winner exactly enough zone1 to hit 0 from the
+    // +2 bonus; everyone else gets a comfortable cushion well above 0.
+    for (const id of ids) {
+      const player = state.players[id as string]!;
+      const isWinner = roundWinnerIds.includes(id as string);
+      player.tokens = { zone1: isWinner ? 2 : 20, zone2: player.tokens.zone2 };
+    }
+
+    for (const id of ids) {
+      const result = stop(state, id as string, seededRng(51), 0);
+      expect(result.ok).toBe(true);
+    }
+
+    expect(state.phase).toBe('game_end');
+    expect(state.roundNo).toBeLessThan(4);
+    for (const id of roundWinnerIds) {
+      expect(state.players[id]!.tokens.zone1).toBe(0);
+    }
+    expect(new Set(state.winnerIds)).toEqual(new Set(roundWinnerIds));
   });
 });
 

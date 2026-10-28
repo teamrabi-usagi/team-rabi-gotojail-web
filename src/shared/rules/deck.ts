@@ -26,12 +26,16 @@ interface PoolComposition {
   readonly bomb: number;
 }
 
-/** 人数別のメインプール構成。total = plainSafe + guardSafe + bomb = 7*n + HIDDEN_COUNT。 */
+/**
+ * 人数別のメインプール構成。total = plainSafe + guardSafe + bomb = 7*n + HIDDEN_COUNT。
+ * 安全:爆弾 ≈ 1:1(totalが奇数の人数は爆弾側に1枚寄せる)。guardSafeは常に0(2人)か5(3人以上)固定で、
+ * この比率調整とは独立(看守イベント用の別枠)。
+ */
 export const MAIN_POOL_BY_PLAYER_COUNT: Readonly<Record<PlayerCount, PoolComposition>> = {
-  2: { total: 20, plainSafe: 12, guardSafe: 0, bomb: 8 },
-  3: { total: 27, plainSafe: 11, guardSafe: 5, bomb: 11 },
-  4: { total: 34, plainSafe: 15, guardSafe: 5, bomb: 14 },
-  5: { total: 41, plainSafe: 20, guardSafe: 5, bomb: 16 },
+  2: { total: 20, plainSafe: 10, guardSafe: 0, bomb: 10 },
+  3: { total: 27, plainSafe: 8, guardSafe: 5, bomb: 14 },
+  4: { total: 34, plainSafe: 12, guardSafe: 5, bomb: 17 },
+  5: { total: 41, plainSafe: 15, guardSafe: 5, bomb: 21 },
 };
 
 export function mainPoolSizeFor(n: PlayerCount): number {

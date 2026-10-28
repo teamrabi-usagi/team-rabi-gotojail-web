@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createInitialTokens, moveZone1ToZone2, payAnte, receiveAntePayout } from '../src/shared/rules/tokens.js';
+import { createInitialTokens, moveZone1ToZone2, receiveAntePayout } from '../src/shared/rules/tokens.js';
 
 describe('createInitialTokens', () => {
   it('starts with zone1=startingZone1, zone2=0', () => {
@@ -30,15 +30,5 @@ describe('receiveAntePayout', () => {
 
   it('is a no-op for amount<=0', () => {
     expect(receiveAntePayout({ zone1: 20, zone2: 5 }, 0)).toEqual({ zone1: 20, zone2: 5 });
-  });
-});
-
-describe('payAnte', () => {
-  it('moves amount out of zone1 (into the shared pot, tracked elsewhere)', () => {
-    expect(payAnte({ zone1: 25, zone2: 0 }, 2)).toEqual({ zone1: 23, zone2: 0 });
-  });
-
-  it('clamps at 0 if zone1 is less than the ante amount', () => {
-    expect(payAnte({ zone1: 1, zone2: 0 }, 2)).toEqual({ zone1: 0, zone2: 0 });
   });
 });

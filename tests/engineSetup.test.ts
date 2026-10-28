@@ -10,7 +10,7 @@ function makePlayerIds(n: number): string[] {
 }
 
 describe('createGameState', () => {
-  it('starts at roundNo=1, phase=round_setup, with the ante already collected into the pot', () => {
+  it('starts at roundNo=1, phase=round_setup, with the ante already added to the pot (not deducted from any player)', () => {
     const ids = makePlayerIds(3);
     const state = createGameState(ids, seededRng(1));
 
@@ -20,7 +20,7 @@ describe('createGameState', () => {
 
     for (const id of ids) {
       const player = state.players[id];
-      expect(player?.tokens.zone1).toBe(STARTING_ZONE1 - 2); // paid 2 ante
+      expect(player?.tokens.zone1).toBe(STARTING_ZONE1); // ante no longer comes out of zone1
       expect(player?.tokens.zone2).toBe(0);
       expect(player?.mainSeven).toHaveLength(7);
       expect(player?.hand).toBeNull();

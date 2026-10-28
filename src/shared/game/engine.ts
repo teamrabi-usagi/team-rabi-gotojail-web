@@ -10,8 +10,8 @@ import type { Card, CardKind, NeighborDirection, PlayerCount, Rng } from '../typ
 import { isPlayerCount } from '../types.js';
 import { dealMainPool, sortSafeFirst } from '../rules/deck.js';
 import { forcedPosition, insertLuckyCard, isAllowedPosition, luckyRecipientSeat } from '../rules/luckyPlacement.js';
-import { createInitialTokens, payAnte } from '../rules/tokens.js';
-import { anteAmountPerPlayer } from '../rules/ante.js';
+import { createInitialTokens } from '../rules/tokens.js';
+import { anteTotalFor } from '../rules/ante.js';
 import { canFlip, createPlayerRoundProgress, flipNext, stopFlipping, type PlayerRoundProgress } from '../rules/flip.js';
 import { resolveRound, type RoundPlayerInput } from '../rules/roundResolution.js';
 import { buildGuardEventDeck, drawGuardEventCard } from '../rules/guardEventDeck.js';
@@ -99,17 +99,11 @@ export function setupRound(state: GameState, rng: Rng): void {
   state.roundEndsAt = null;
   state.pendingGuardEvent = null;
 
-  // 座(アンティ)の収集: 全員①から2個ずつ中央の座へ。持ち越し分に上乗せする。
-  // ①が2未満で全額を払えない場合でも、実際に払えた分だけを座に加える(トークン保存則を守るため、
-  // anteTotalFor(n)を無条件に加算しない)。
-  let actualAnteCollected = 0;
-  for (const playerId of state.playerOrder) {
-    const player = state.players[playerId] as PlayerGameState;
-    const zone1Before = player.tokens.zone1;
-    player.tokens = payAnte(player.tokens, anteAmountPerPlayer());
-    actualAnteCollected += zone1Before - player.tokens.zone1;
-  }
-  state.pot += actualAnteCollected;
+  // 座(アンティ)の積み増し: プレイヤーの①からは一切引かず、座を直接 人数×2 だけ増やす
+  // (持ち越し分に上乗せ)。これにより①は安全フリップ変換・ラウンド勝者ボーナス(自分の意思で
+  // 減らす)と、脱落時に座から受け取る分(ペナルティで増える)だけで動くようになり、
+  // 「何もしなくても毎ラウンド強制的に①が減る」要素が無くなる。
+  state.pot += anteTotalFor(n);
 
   // 配布: メインプールをシャッフルして配り、各自の7枚を安全側ソートする。
   const { hands } = dealMainPool(n, rng);
@@ -194,7 +188,8 @@ function allPlayersDone(state: GameState): boolean {
 
 /**
  * ラウンド終了条件(timedOut、または全員done)を満たしていれば、①②精算・座精算・
- * 次ラウンドのセットアップ(または終局判定)までを1回でまとめて行う。満たしていなければnull。
+ * 終局判定(①=0到達なら即座に、そうでなければ4ラウンド到達時のみ)・次ラウンドの
+ * セットアップまでを1回でまとめて行う。満たしていなければnull。
  */
 export function finishRoundIfReady(state: GameState, rng: Rng, now: number, timedOut: boolean): RoundResolvedSummary | null {
   if (state.phase !== 'round_active') {
@@ -259,7 +254,17 @@ export function finishRoundIfReady(state: GameState, rng: Rng, now: number, time
 
   state.phase = 'round_end';
 
-  if (state.roundNo >= TOTAL_ROUNDS) {
+  // ①(残り刑期)が0に到達したプレイヤーがいれば、4ラウンドを待たずその時点で即座に勝利とする
+  // (同時に複数人が0に到達した場合は同率優勝)。以前は4ラウンド固定で「最後に①が最少の人が勝ち」
+  // だったが、①は0未満にならない(0floor)ため、妥当なプレイだとほぼ全員が0に張り付いて
+  // 同率優勝だらけになる問題があった。0到達即終了にすることで、「0に張り付いて消化試合をする」
+  // 状況自体が発生しなくなる。
+  const zeroedPlayerIds = state.playerOrder.filter((id) => (state.players[id] as PlayerGameState).tokens.zone1 === 0);
+
+  if (zeroedPlayerIds.length > 0) {
+    state.winnerIds = zeroedPlayerIds;
+    state.phase = 'game_end';
+  } else if (state.roundNo >= TOTAL_ROUNDS) {
     finishGame(state);
   } else {
     setupRound(state, rng);
@@ -268,7 +273,7 @@ export function finishRoundIfReady(state: GameState, rng: Rng, now: number, time
   return summary;
 }
 
-/** 4ラウンドを終えた時点で、①が最も少ないプレイヤー(同率優勝あり)を勝者にする。 */
+/** 4ラウンドを終えても誰も①=0に到達しなかった場合のフォールバック: ①が最も少ないプレイヤー(同率優勝あり)を勝者にする。 */
 export function finishGame(state: GameState): void {
   const zone1Values = state.playerOrder.map((id) => (state.players[id] as PlayerGameState).tokens.zone1);
   const minZone1 = Math.min(...zone1Values);
