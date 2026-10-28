@@ -24,7 +24,7 @@ export interface GameViewLog {
 const PHASE_ORDER: readonly PublicGameState['phase'][] = ['round_setup', 'round_active', 'round_end', 'game_end'];
 
 const PHASE_LABELS: Record<PublicGameState['phase'], string> = {
-  round_setup: '①ラッキー挿入',
+  round_setup: '①チャンス挿入',
   round_active: '②めくり',
   round_end: '③精算',
   game_end: '④結果発表',

@@ -48,7 +48,7 @@ export function renderLuckyPlacement(
   const recipientName = names.get(recipientHand.playerId) ?? '(不明なプレイヤー)';
 
   const title = document.createElement('div');
-  title.textContent = `あなたのラッキーカードを、${recipientName}さんの手札に挿入してください`;
+  title.textContent = `あなたのチャンスカードを、${recipientName}さんの手札に挿入してください`;
   container.appendChild(title);
 
   const row = document.createElement('div');
@@ -87,5 +87,5 @@ export function renderLuckyPlacement(
 export function renderWaitingForOthersLuckyPlacement(container: HTMLElement, pendingOwnerIds: readonly string[]): void {
   container.innerHTML = '';
   container.className = 'panel';
-  container.textContent = `他のプレイヤーがラッキーカードを配置中です… (残り${pendingOwnerIds.length}人)`;
+  container.textContent = `他のプレイヤーがチャンスカードを配置中です… (残り${pendingOwnerIds.length}人)`;
 }
