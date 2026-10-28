@@ -44,6 +44,12 @@ export function renderLobbyForm(container: HTMLElement, callbacks: LobbyFormCall
   const joinPanel = document.createElement('div');
   joinPanel.className = 'panel';
 
+  const joinNameInput = document.createElement('input');
+  joinNameInput.type = 'text';
+  joinNameInput.placeholder = '表示名(例: うさぎB)';
+  joinNameInput.maxLength = 20;
+  joinPanel.appendChild(joinNameInput);
+
   const codeInput = document.createElement('input');
   codeInput.type = 'text';
   codeInput.placeholder = 'ルームコード(4文字)';
@@ -55,7 +61,7 @@ export function renderLobbyForm(container: HTMLElement, callbacks: LobbyFormCall
   joinButton.className = 'secondary';
   joinButton.textContent = 'ルームに参加する';
   joinButton.addEventListener('click', () => {
-    callbacks.onJoin(codeInput.value, nameInput.value);
+    callbacks.onJoin(codeInput.value, joinNameInput.value);
   });
   joinPanel.appendChild(joinButton);
 
