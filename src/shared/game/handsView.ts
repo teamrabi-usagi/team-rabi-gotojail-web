@@ -25,6 +25,8 @@ export interface PlayerHandView {
   readonly stopped: boolean;
   /** ラッキー挿入が済み、8枚の最終手札が確定しているか(round_setup中はfalse)。 */
   readonly handReady: boolean;
+  /** 直前にラッキーカードをめくり、次の安全カードが2個分になるボーナスが未消費のまま残っているか。 */
+  readonly luckyBonusPending: boolean;
 }
 
 export interface HandsView {
@@ -53,6 +55,7 @@ function toHandViewForPlayer(player: PlayerGameState, viewerPlayerId: string): P
       bustedAtFlipIndex: null,
       stopped: false,
       handReady: false,
+      luckyBonusPending: false,
     };
   }
 
@@ -69,6 +72,7 @@ function toHandViewForPlayer(player: PlayerGameState, viewerPlayerId: string): P
     bustedAtFlipIndex: progress?.bustedAtFlipIndex ?? null,
     stopped: progress?.stopped ?? false,
     handReady: true,
+    luckyBonusPending: progress?.luckyBonusPending ?? false,
   };
 }
 

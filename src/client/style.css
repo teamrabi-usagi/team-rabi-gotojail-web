@@ -224,6 +224,29 @@ button.secondary {
   height: 100%;
 }
 
+.table-seat-chance-note {
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: var(--color-accent);
+  background: rgba(224, 169, 74, 0.18);
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  padding: 2px 5px;
+  margin: 0 auto 4px;
+  max-width: 110px;
+  animation: chanceNotePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes chanceNotePulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .table-seat-cards {
   display: flex;
   flex-wrap: nowrap;

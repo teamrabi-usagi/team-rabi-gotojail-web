@@ -9,9 +9,13 @@
 
 import type { HandsView, PlayerHandView } from '../../shared/game/handsView.js';
 import { cardArtSvg } from './cardArt.js';
+import { showBluffToast } from './bluffToast.js';
 
 /** playerId -> 直前に描画したflippedCount。新規めくりの検出にだけ使う。 */
 const lastFlippedCounts = new Map<string, number>();
+
+const CHANCE_FLIP_MESSAGE = 'チャンス!次のカードをめくってセーフだったら刑期を2年減らせる!';
+const CHANCE_PENDING_MESSAGE = '次のカードをめくったら刑期を2年減らせる…!';
 
 function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
   return names.get(playerId) ?? '(不明なプレイヤー)';
@@ -36,7 +40,13 @@ function renderCard(view: PlayerHandView['cards'][number], isMini: boolean, just
   return el;
 }
 
-function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<string, string>): HTMLElement {
+interface RenderedSeat {
+  readonly el: HTMLElement;
+  /** 新たにラッキーカードが公開された場合のみtrue。seatElがDOMに追加された後にトーストを出すため、呼び出し元へ伝搬する。 */
+  readonly justRevealedLucky: boolean;
+}
+
+function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<string, string>): RenderedSeat {
   const seatEl = document.createElement('div');
   seatEl.className = `table-seat${isSelf ? ' you' : ''}`;
   seatEl.dataset.playerId = hand.playerId;
@@ -52,8 +62,17 @@ function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<st
   meeple.innerHTML = MEEPLE_SVG;
   seatEl.appendChild(meeple);
 
+  if (hand.luckyBonusPending) {
+    const chanceNote = document.createElement('div');
+    chanceNote.className = 'table-seat-chance-note';
+    chanceNote.textContent = CHANCE_PENDING_MESSAGE;
+    seatEl.appendChild(chanceNote);
+  }
+
   const cardsEl = document.createElement('div');
   cardsEl.className = 'table-seat-cards';
+
+  let justRevealedLucky = false;
 
   if (!hand.handReady) {
     const placeholder = document.createElement('div');
@@ -67,12 +86,15 @@ function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<st
 
     hand.cards.forEach((card, idx) => {
       const justRevealed = newlyRevealedFrom !== null && idx >= newlyRevealedFrom && idx < hand.flippedCount;
+      if (justRevealed && card.revealed && card.kind === 'lucky') {
+        justRevealedLucky = true;
+      }
       cardsEl.appendChild(renderCard(card, true, justRevealed));
     });
   }
 
   seatEl.appendChild(cardsEl);
-  return seatEl;
+  return { el: seatEl, justRevealedLucky };
 }
 
 export function renderHandsView(container: HTMLElement, view: HandsView, selfPlayerId: string, names: ReadonlyMap<string, string>): void {
@@ -84,7 +106,7 @@ export function renderHandsView(container: HTMLElement, view: HandsView, selfPla
 
   view.hands.forEach((hand, i) => {
     const isSelf = hand.playerId === selfPlayerId;
-    const seatEl = renderSeat(hand, isSelf, names);
+    const { el: seatEl, justRevealedLucky } = renderSeat(hand, isSelf, names);
 
     const offset = selfIndex === -1 ? i : i - selfIndex;
     const angle = -Math.PI / 2 + (2 * Math.PI * offset) / n;
@@ -94,5 +116,10 @@ export function renderHandsView(container: HTMLElement, view: HandsView, selfPla
     seatEl.style.top = `${cy}%`;
 
     container.appendChild(seatEl);
+
+    // トーストはseatElがDOMに追加された後でないと座席位置を取得できない。
+    if (justRevealedLucky) {
+      showBluffToast(hand.playerId, CHANCE_FLIP_MESSAGE);
+    }
   });
 }
