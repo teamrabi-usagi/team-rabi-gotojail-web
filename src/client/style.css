@@ -217,10 +217,15 @@ button.secondary {
   background: rgba(224, 169, 74, 0.2);
 }
 
+.table-seat-meeple-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
 .table-seat-meeple {
   width: 22px;
   height: 22px;
-  margin: 0 auto 4px;
   color: #8a7257;
 }
 
@@ -234,26 +239,77 @@ button.secondary {
   height: 100%;
 }
 
-.table-seat-chance-note {
-  font-size: 0.65rem;
-  font-weight: bold;
-  color: var(--color-accent);
-  background: rgba(224, 169, 74, 0.18);
+/* ミープルの右隣に出す吹き出し(常時表示のチャンス予告、ブラフトースト共通)。 */
+.meeple-bubble {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 6px;
+  background: rgba(42, 31, 24, 0.95);
   border: 1px solid var(--color-accent);
-  border-radius: 6px;
-  padding: 2px 5px;
-  margin: 0 auto 4px;
-  max-width: 110px;
-  animation: chanceNotePulse 1.6s ease-in-out infinite;
+  color: var(--color-text);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.62rem;
+  font-weight: bold;
+  line-height: 1.3;
+  width: max-content;
+  max-width: 130px;
+  text-align: left;
+  white-space: normal;
+  z-index: 20;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes chanceNotePulse {
+.meeple-bubble::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid var(--color-accent);
+}
+
+.meeple-bubble--pending {
+  color: var(--color-accent);
+  animation: meepleBubblePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes meepleBubblePulse {
   0%,
   100% {
-    opacity: 0.75;
+    opacity: 0.8;
   }
   50% {
     opacity: 1;
+  }
+}
+
+.meeple-bubble--toast {
+  opacity: 0;
+  animation: meepleBubbleToast 3.4s ease forwards;
+}
+
+@keyframes meepleBubbleToast {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-6px) scale(0.92);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(4px) scale(0.96);
   }
 }
 
@@ -569,42 +625,6 @@ button.secondary {
   inset: 0;
   pointer-events: none;
   z-index: 1000;
-}
-
-.bluff-toast {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  background: rgba(42, 31, 24, 0.95);
-  border: 1px solid var(--color-accent);
-  color: var(--color-text);
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  max-width: 220px;
-  text-align: center;
-  white-space: normal;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  animation: bluffToastFloat 3.4s ease forwards;
-}
-
-@keyframes bluffToastFloat {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -70%);
-  }
-  15% {
-    opacity: 1;
-    transform: translate(-50%, -110%);
-  }
-  75% {
-    opacity: 1;
-    transform: translate(-50%, -120%);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -145%);
-  }
 }
 
 .judge-overlay {

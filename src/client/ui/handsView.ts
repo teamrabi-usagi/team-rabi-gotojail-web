@@ -57,17 +57,23 @@ function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<st
   label.textContent = `${isSelf ? 'あなた' : nameFor(names, hand.playerId)}${statusSuffix}`;
   seatEl.appendChild(label);
 
+  const meepleWrap = document.createElement('div');
+  meepleWrap.className = 'table-seat-meeple-wrap';
+  meepleWrap.dataset.meepleFor = hand.playerId;
+
   const meeple = document.createElement('div');
   meeple.className = 'table-seat-meeple';
   meeple.innerHTML = MEEPLE_SVG;
-  seatEl.appendChild(meeple);
+  meepleWrap.appendChild(meeple);
 
   if (hand.luckyBonusPending) {
     const chanceNote = document.createElement('div');
-    chanceNote.className = 'table-seat-chance-note';
+    chanceNote.className = 'meeple-bubble meeple-bubble--pending';
     chanceNote.textContent = CHANCE_PENDING_MESSAGE;
-    seatEl.appendChild(chanceNote);
+    meepleWrap.appendChild(chanceNote);
   }
+
+  seatEl.appendChild(meepleWrap);
 
   const cardsEl = document.createElement('div');
   cardsEl.className = 'table-seat-cards';
