@@ -4,6 +4,7 @@ import {
   MAIN_HAND_SIZE,
   MAIN_POOL_BY_PLAYER_COUNT,
   dealMainPool,
+  distributeSafeNumbers,
   isAllBombs,
   mainPoolSizeFor,
   shuffle,
@@ -11,25 +12,51 @@ import {
 } from '../src/shared/rules/deck.js';
 import type { PlayerCount } from '../src/shared/types.js';
 import { seededRng } from './rng.js';
+import { card } from './cardHelpers.js';
 
 const PLAYER_COUNTS: readonly PlayerCount[] = [2, 3, 4, 5];
 
 describe('MAIN_POOL_BY_PLAYER_COUNT', () => {
-  it('totals match plainSafe+bomb and 7*n+HIDDEN_COUNT for every player count', () => {
+  it('totals match plainSafe+guardSafe+bomb and 7*n+HIDDEN_COUNT for every player count', () => {
     for (const n of PLAYER_COUNTS) {
       const comp = MAIN_POOL_BY_PLAYER_COUNT[n];
-      expect(comp.plainSafe + comp.bomb).toBe(comp.total);
+      expect(comp.plainSafe + comp.guardSafe + comp.bomb).toBe(comp.total);
       expect(comp.total).toBe(MAIN_HAND_SIZE * n + HIDDEN_COUNT);
     }
   });
 
-  it('matches the exact numbers agreed in the design conversation (guard cards merged into plain)', () => {
+  it('guard cards are only used from 3 players up, and are always exactly 5 (one per number) when used', () => {
+    expect(MAIN_POOL_BY_PLAYER_COUNT[2].guardSafe).toBe(0);
+    expect(MAIN_POOL_BY_PLAYER_COUNT[3].guardSafe).toBe(5);
+    expect(MAIN_POOL_BY_PLAYER_COUNT[4].guardSafe).toBe(5);
+    expect(MAIN_POOL_BY_PLAYER_COUNT[5].guardSafe).toBe(5);
+  });
+
+  it('matches the exact numbers agreed in the design conversation', () => {
     expect(MAIN_POOL_BY_PLAYER_COUNT).toEqual({
-      2: { total: 20, plainSafe: 12, bomb: 8 },
-      3: { total: 27, plainSafe: 16, bomb: 11 },
-      4: { total: 34, plainSafe: 20, bomb: 14 },
-      5: { total: 41, plainSafe: 25, bomb: 16 },
+      2: { total: 20, plainSafe: 12, guardSafe: 0, bomb: 8 },
+      3: { total: 27, plainSafe: 11, guardSafe: 5, bomb: 11 },
+      4: { total: 34, plainSafe: 15, guardSafe: 5, bomb: 14 },
+      5: { total: 41, plainSafe: 20, guardSafe: 5, bomb: 16 },
     });
+  });
+});
+
+describe('distributeSafeNumbers', () => {
+  it('distributes as evenly as possible across 1..5, favoring lower numbers for the remainder', () => {
+    expect(distributeSafeNumbers(12)).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5]);
+    expect(distributeSafeNumbers(15)).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]);
+  });
+
+  it('always produces exactly `count` numbers, each within 1..5', () => {
+    for (const count of [11, 12, 15, 20]) {
+      const result = distributeSafeNumbers(count);
+      expect(result).toHaveLength(count);
+      for (const n of result) {
+        expect(n).toBeGreaterThanOrEqual(1);
+        expect(n).toBeLessThanOrEqual(5);
+      }
+    }
   });
 });
 
@@ -73,8 +100,14 @@ describe('dealMainPool', () => {
       const comp = MAIN_POOL_BY_PLAYER_COUNT[n];
 
       expect(allCards).toHaveLength(mainPoolSizeFor(n));
-      expect(allCards.filter((k) => k === 'plain')).toHaveLength(comp.plainSafe);
-      expect(allCards.filter((k) => k === 'bomb')).toHaveLength(comp.bomb);
+      expect(allCards.filter((c) => c.kind === 'plain')).toHaveLength(comp.plainSafe);
+      expect(allCards.filter((c) => c.kind === 'guard')).toHaveLength(comp.guardSafe);
+      expect(allCards.filter((c) => c.kind === 'bomb')).toHaveLength(comp.bomb);
+      // 看守カードが出る場合は必ず番号1〜5が1枚ずつ。
+      if (comp.guardSafe > 0) {
+        const guardNumbers = allCards.filter((c) => c.kind === 'guard').map((c) => c.number);
+        expect([...guardNumbers].sort()).toEqual([1, 2, 3, 4, 5]);
+      }
     }
   });
 
@@ -87,25 +120,34 @@ describe('dealMainPool', () => {
 
 describe('sortSafeFirst', () => {
   it('moves all bombs to the end while preserving relative order within each side', () => {
-    const input = ['bomb', 'plain', 'bomb', 'lucky', 'plain', 'bomb'] as const;
-    expect(sortSafeFirst(input)).toEqual(['plain', 'lucky', 'plain', 'bomb', 'bomb', 'bomb']);
+    const input = [card('bomb'), card('plain', 3), card('bomb'), card('lucky'), card('plain', 1), card('bomb')];
+    // lucky has number=null (treated as 0), so it sorts after plain(1).
+    expect(sortSafeFirst(input)).toEqual([card('plain', 3), card('plain', 1), card('lucky'), card('bomb'), card('bomb'), card('bomb')]);
   });
 
-  it('is a no-op for an all-safe hand', () => {
-    const input = ['plain', 'lucky', 'plain'] as const;
-    expect(sortSafeFirst(input)).toEqual(['plain', 'lucky', 'plain']);
+  it('orders the safe segment by number descending: farthest from the bomb (5) first, closest (1) last', () => {
+    const input = [card('plain', 1), card('guard', 4), card('plain', 2), card('guard', 5), card('plain', 3), card('bomb')];
+    const result = sortSafeFirst(input);
+    expect(result.map((c) => c.number)).toEqual([5, 4, 3, 2, 1, null]);
+    expect(result[result.length - 1]!.kind).toBe('bomb');
+  });
+
+  it('is a no-op (order-wise) for an all-safe hand with distinct numbers', () => {
+    const input = [card('plain', 3), card('lucky'), card('plain', 1)];
+    // luckyはnumber=nullなので0扱いで最後列に寄る。
+    expect(sortSafeFirst(input)).toEqual([card('plain', 3), card('plain', 1), card('lucky')]);
   });
 
   it('is a no-op for an all-bomb hand', () => {
-    const input = ['bomb', 'bomb'] as const;
-    expect(sortSafeFirst(input)).toEqual(['bomb', 'bomb']);
+    const input = [card('bomb'), card('bomb')];
+    expect(sortSafeFirst(input)).toEqual([card('bomb'), card('bomb')]);
   });
 });
 
 describe('isAllBombs', () => {
   it('is true only when every card is a bomb and the hand is non-empty', () => {
-    expect(isAllBombs(['bomb', 'bomb', 'bomb'])).toBe(true);
-    expect(isAllBombs(['bomb', 'plain', 'bomb'])).toBe(false);
+    expect(isAllBombs([card('bomb'), card('bomb'), card('bomb')])).toBe(true);
+    expect(isAllBombs([card('bomb'), card('plain', 1), card('bomb')])).toBe(false);
     expect(isAllBombs([])).toBe(false);
   });
 });

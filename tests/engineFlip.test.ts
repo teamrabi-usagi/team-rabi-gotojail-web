@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGameState, flipCard, stop, submitLuckyPlacement } from '../src/shared/game/engine.js';
+import { createGameState, flipCard, respondToGuardEvent, stop, submitLuckyPlacement } from '../src/shared/game/engine.js';
 import { forcedPosition } from '../src/shared/rules/luckyPlacement.js';
 import { seededRng } from './rng.js';
 
@@ -56,7 +56,7 @@ describe('flipCard', () => {
   it('a safe flip returns outcome=safe and advances flippedCount', () => {
     const { ids, state } = startActiveGame(2, 5);
     const player = state.players[ids[0] as string]!;
-    const kind = player.hand![0];
+    const kind = player.hand![0]!.kind;
 
     const result = flipCard(state, ids[0] as string, seededRng(6), 0);
     expect(result.ok).toBe(true);
@@ -162,6 +162,58 @@ describe('game end after TOTAL_ROUNDS', () => {
         expect(state.phase).toBe('game_end');
         expect(state.winnerIds).not.toBeNull();
         expect(state.winnerIds?.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe('guard-marked card events', () => {
+  it('flipping a guard-marked card pauses the round (pendingGuardEvent set, roundEndsAt cleared) and blocks everyone from flipping/stopping', () => {
+    // search for a seed (3 players, so guard cards exist) whose first-flipped card for p0 is a guard card.
+    for (let seed = 0; seed < 300; seed++) {
+      const { ids, state } = startActiveGame(3, seed);
+      const player = state.players[ids[0] as string]!;
+      if (player.hand![0]!.kind !== 'guard') {
+        continue;
+      }
+
+      const result = flipCard(state, ids[0] as string, seededRng(seed + 5000), 1000);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.outcome).toBe('safe');
+      expect(result.guardEvent).not.toBeNull();
+      expect(state.pendingGuardEvent).not.toBeNull();
+      expect(state.roundEndsAt).toBeNull();
+
+      const targetId = result.guardEvent!.targetPlayerId;
+      const nonTargetId = ids.find((id) => id !== targetId)!;
+
+      // everyone (including the target) is blocked from flipping/stopping while pending.
+      expect(flipCard(state, targetId, seededRng(1), 1001).ok).toBe(false);
+      expect(stop(state, nonTargetId, seededRng(2), 1001).ok).toBe(false);
+
+      // only the target may respond; anyone else is rejected.
+      expect(respondToGuardEvent(state, nonTargetId, 2, seededRng(3), 1002).ok).toBe(false);
+
+      const responded = respondToGuardEvent(state, targetId, 2, seededRng(4), 1002);
+      expect(responded.ok).toBe(true);
+      if (responded.ok) {
+        expect(responded.resolved.count).toBe(2);
+      }
+      expect(state.pendingGuardEvent).toBeNull();
+      expect(state.roundEndsAt).not.toBeNull();
+      return;
+    }
+    throw new Error('no seed produced a guard-first hand within 300 attempts; widen the search range');
+  });
+
+  it('never triggers for 2 players (no guard cards exist in the 2-player composition)', () => {
+    for (let seed = 0; seed < 50; seed++) {
+      const { state, ids } = startActiveGame(2, seed + 9000);
+      for (const id of ids) {
+        for (const c of state.players[id]!.hand!) {
+          expect(c.kind).not.toBe('guard');
+        }
       }
     }
   });

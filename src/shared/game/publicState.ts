@@ -3,6 +3,7 @@
  * カード種別データ(自分/他人の手札の内容)は一切含めない -- それは handsView.ts の責務。
  */
 
+import type { NeighborDirection } from '../types.js';
 import { TOTAL_ROUNDS, type GameState, type RoundPhase } from './state.js';
 import { pendingLuckyPlacementOwners } from './engine.js';
 
@@ -11,6 +12,14 @@ export interface PublicPlayerGameState {
   readonly seat: number;
   readonly zone1: number;
   readonly zone2: number;
+}
+
+export interface PublicPendingGuardEvent {
+  readonly drawerPlayerId: string;
+  readonly targetPlayerId: string;
+  readonly targetPrisonerNumber: number;
+  readonly neighborPlayerId: string;
+  readonly direction: NeighborDirection;
 }
 
 export interface PublicGameState {
@@ -25,6 +34,8 @@ export interface PublicGameState {
   readonly winnerIds: readonly string[] | null;
   /** round_setup中、まだ自分の担当(相手へのラッキー挿入)を終えていないplayerId一覧。 */
   readonly pendingLuckyPlacementOwners: readonly string[];
+  /** 看守マーク付きカードがめくられ、対象者の回答待ちで進行が一時停止している間だけnullでない。 */
+  readonly pendingGuardEvent: PublicPendingGuardEvent | null;
 }
 
 export function toPublicGameState(state: GameState): PublicGameState {
@@ -47,5 +58,15 @@ export function toPublicGameState(state: GameState): PublicGameState {
     roundEndsAt: state.roundEndsAt,
     winnerIds: state.winnerIds,
     pendingLuckyPlacementOwners: pendingLuckyPlacementOwners(state),
+    pendingGuardEvent:
+      state.pendingGuardEvent === null
+        ? null
+        : {
+            drawerPlayerId: state.pendingGuardEvent.drawerPlayerId,
+            targetPlayerId: state.pendingGuardEvent.targetPlayerId,
+            targetPrisonerNumber: state.pendingGuardEvent.targetPrisonerNumber,
+            neighborPlayerId: state.pendingGuardEvent.neighborPlayerId,
+            direction: state.pendingGuardEvent.direction,
+          },
   };
 }

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createPlayerRoundProgress, flipNext, stopFlipping } from '../src/shared/rules/flip.js';
 import { createInitialTokens } from '../src/shared/rules/tokens.js';
 import { resolveRound, ROUND_WINNER_BONUS, type RoundPlayerInput } from '../src/shared/rules/roundResolution.js';
-import type { CardKind } from '../src/shared/types.js';
+import type { Card } from '../src/shared/types.js';
+import { cards } from './cardHelpers.js';
 
-function flipTimes(hand: readonly CardKind[], times: number) {
+function flipTimes(hand: readonly Card[], times: number) {
   let progress = createPlayerRoundProgress(hand);
   for (let i = 0; i < times; i++) {
     progress = flipNext(progress).progress;
@@ -15,7 +16,7 @@ function flipTimes(hand: readonly CardKind[], times: number) {
 describe('resolveRound', () => {
   it('matches the worked example from the design conversation: 7 main cards, 5 safe, flip 4 then stop', () => {
     // hand sorted safe-first: 5 safe cards then 2 bombs (7 cards, no lucky card in this example)
-    const hand: readonly CardKind[] = ['plain', 'plain', 'plain', 'plain', 'plain', 'bomb', 'bomb'];
+    const hand: readonly Card[] = cards('plain', 'plain', 'plain', 'plain', 'plain', 'bomb', 'bomb');
     const progress = stopFlipping(flipTimes(hand, 4));
 
     const input: RoundPlayerInput = {
@@ -35,8 +36,8 @@ describe('resolveRound', () => {
   });
 
   it('isolates the pure safe-flip conversion (no round-winner bonus) when another survivor has fewer remaining safe cards', () => {
-    const handP1: readonly CardKind[] = ['plain', 'plain', 'plain', 'plain', 'plain', 'bomb', 'bomb'];
-    const handP2: readonly CardKind[] = ['plain', 'bomb']; // flips its only safe card, 0 remaining -> beats p1's 1 remaining
+    const handP1: readonly Card[] = cards('plain', 'plain', 'plain', 'plain', 'plain', 'bomb', 'bomb');
+    const handP2: readonly Card[] = cards('plain', 'bomb'); // flips its only safe card, 0 remaining -> beats p1's 1 remaining
 
     const p1Progress = stopFlipping(flipTimes(handP1, 4)); // 1 safe card remains unflipped
     const p2Progress = stopFlipping(flipTimes(handP2, 1)); // 0 safe cards remain unflipped
@@ -57,8 +58,8 @@ describe('resolveRound', () => {
   });
 
   it('awards the round-winner bonus to the survivor with fewest remaining safe cards', () => {
-    const handA: readonly CardKind[] = ['plain', 'plain', 'bomb']; // flips both plain, 0 remaining safe
-    const handB: readonly CardKind[] = ['plain', 'plain', 'plain', 'bomb']; // flips one, 2 remaining safe
+    const handA: readonly Card[] = cards('plain', 'plain', 'bomb'); // flips both plain, 0 remaining safe
+    const handB: readonly Card[] = cards('plain', 'plain', 'plain', 'bomb'); // flips one, 2 remaining safe
 
     const progressA = stopFlipping(flipTimes(handA, 2));
     const progressB = stopFlipping(flipTimes(handB, 1));
@@ -82,7 +83,7 @@ describe('resolveRound', () => {
   });
 
   it('ties are co-winners: both get the bonus', () => {
-    const hand: readonly CardKind[] = ['plain', 'bomb'];
+    const hand: readonly Card[] = cards('plain', 'bomb');
     const progressA = stopFlipping(flipTimes(hand, 1));
     const progressB = stopFlipping(flipTimes(hand, 1));
 
@@ -96,7 +97,7 @@ describe('resolveRound', () => {
   });
 
   it('a busted player cannot be a round winner even with 0 remaining safe cards, but keeps pre-bust conversion', () => {
-    const hand: readonly CardKind[] = ['plain', 'plain', 'bomb'];
+    const hand: readonly Card[] = cards('plain', 'plain', 'bomb');
     const progress = flipTimes(hand, 3); // flips both plain safely, then busts on the bomb
 
     const inputs: RoundPlayerInput[] = [{ playerId: 'busted', tokens: createInitialTokens(25), progress }];
@@ -109,9 +110,9 @@ describe('resolveRound', () => {
   });
 
   it('integrates ante settlement by bust order on top of the safe-flip and bonus conversions', () => {
-    const hand: readonly CardKind[] = ['bomb'];
+    const hand: readonly Card[] = cards('bomb');
     const progressA = flipTimes(hand, 1); // busts immediately
-    const progressB = stopFlipping(createPlayerRoundProgress(['plain'])); // never flips, just stops
+    const progressB = stopFlipping(createPlayerRoundProgress(cards('plain'))); // never flips, just stops
 
     const inputs: RoundPlayerInput[] = [
       { playerId: 'a', tokens: createInitialTokens(25), progress: progressA },

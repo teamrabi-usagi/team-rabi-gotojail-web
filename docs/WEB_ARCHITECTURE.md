@@ -56,7 +56,7 @@ Express + Socket.IO  ← サーバー権威。ルールの判定はすべてこ�
 
 ルームごとに1つの`GameState`(`src/shared/game/state.ts`)をin-memoryで保持する。
 host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認し、ルールそのもの
-(カード構成・ラッキー挿入・めくり・ラウンド精算)は`src/shared/game/engine.ts`
+(カード構成・ラッキー挿入・めくり・看守イベント・ラウンド精算)は`src/shared/game/engine.ts`
 (とその先の`src/shared/rules/*.ts`)に委譲する。
 
 ### ラウンドタイマー(`src/server/game/roundTimer.ts`)
@@ -78,8 +78,9 @@ host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認�
 | `room:leave` | — | |
 | `game:start` | — | hostのみ。lobby中の2〜5人room |
 | `game:luckyPlacement:submit` | `{ position }` | 座席iの持ち主が座席(i+1)%nの手札への挿入位置を選ぶ |
-| `game:flip` | — | 自分の手札の次の1枚をめくる(手番順なし) |
-| `game:stop` | — | このラウンドはこれ以上めくらない |
+| `game:flip` | — | 自分の手札の次の1枚をめくる(手番順なし)。看守イベント回答待ち中は全員拒否される |
+| `game:stop` | — | このラウンドはこれ以上めくらない。看守イベント回答待ち中は全員拒否される |
+| `game:guardEvent:respond` | `{ count }` | 看守イベントの対象者のみ。回答した瞬間にラウンドタイマーが再開する |
 | `chat:send` | `{ text }` | 真偽は検証しない |
 
 ### server → client
@@ -90,9 +91,11 @@ host判定・人数制約(2〜5)・lobbyからの開始条件はここで確認�
 | `room:state` | ルーム全員 | 公開情報のみ |
 | `room:error` / `game:error` | 送信元のみ | |
 | `session:replaced` | 引き継がれた旧socketのみ | 直後に切断 |
-| `game:state` | ルーム全員 | `PublicGameState`。カード種別データは一切含まない |
+| `game:state` | ルーム全員 | `PublicGameState`。カード種別データは一切含まない。`pendingGuardEvent`で看守イベント中かが分かる |
 | `game:handsView` | **本人のsocketへの個別emit限定** | §5参照。`io.to(room).emit`には絶対に載せない |
-| `game:round:resolved` | ルーム全員 | ラウンド精算の一時的な表示用サマリ(GameStateには保存されない) |
+| `game:guardEvent:triggered` | ルーム全員 | 看守付きブランクがめくられ、進行が一時停止したことの公開イベント |
+| `game:guardEvent:resolved` | ルーム全員 | 対象者が回答し、タイマーが再開したことの公開イベント |
+| `game:round:resolved` | ルーム全員 | ラウンド精算の一時的な表示用サマリ(GameStateには保存されない)。各プレイヤーの`finalHand`(そのラウンドの最終8枚、自分の分も含む)を一斉公開演出用に含む |
 | `game:ended` | ルーム全員 | 4ラウンド終了時。同率優勝あり |
 | `chat:message` | ルーム全員 | |
 

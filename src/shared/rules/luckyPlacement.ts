@@ -7,7 +7,7 @@
  * 先頭(position 0)への挿入が強制される。
  */
 
-import type { CardKind, PlayerCount } from '../types.js';
+import type { Card, PlayerCount } from '../types.js';
 import { isAllBombs } from './deck.js';
 
 /** 7枚+1枚=8枚の並びに対する挿入スロット数(0..7の8箇所)。 */
@@ -22,7 +22,7 @@ export function luckyOwnerSeat(recipientSeat: number, n: PlayerCount): number {
 }
 
 /** 強制挿入位置。全爆弾でなければnull(=自由に選べる)。 */
-export function forcedPosition(sevenSortedCards: readonly CardKind[]): number | null {
+export function forcedPosition(sevenSortedCards: readonly Card[]): number | null {
   return isAllBombs(sevenSortedCards) ? 0 : null;
 }
 
@@ -34,7 +34,7 @@ export function isValidInsertionPosition(position: number): boolean {
  * positionが、このsevenSortedCardsに対して許可されているかを判定する
  * (全爆弾なら0のみ許可、それ以外は0..7すべて許可)。
  */
-export function isAllowedPosition(sevenSortedCards: readonly CardKind[], position: number): boolean {
+export function isAllowedPosition(sevenSortedCards: readonly Card[], position: number): boolean {
   if (!isValidInsertionPosition(position)) {
     return false;
   }
@@ -43,11 +43,11 @@ export function isAllowedPosition(sevenSortedCards: readonly CardKind[], positio
 }
 
 /** ラッキーカードをsevenSortedCardsのposition番目(挿入後配列でのindex)に挿入した8枚を返す。 */
-export function insertLuckyCard(sevenSortedCards: readonly CardKind[], position: number): CardKind[] {
+export function insertLuckyCard(sevenSortedCards: readonly Card[], position: number): Card[] {
   if (!isAllowedPosition(sevenSortedCards, position)) {
     throw new Error(`insertLuckyCard(): position ${position} is not allowed for this hand`);
   }
   const result = [...sevenSortedCards];
-  result.splice(position, 0, 'lucky');
+  result.splice(position, 0, { kind: 'lucky', number: null });
   return result;
 }

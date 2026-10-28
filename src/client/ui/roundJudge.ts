@@ -61,11 +61,11 @@ export function showRoundJudge(
 
     const cardsEl = document.createElement('div');
     cardsEl.className = 'judge-cards';
-    p.finalHand.forEach((kind, idx) => {
+    p.finalHand.forEach((card, idx) => {
       const cardEl = document.createElement('div');
       const alreadyFlipped = idx < p.flippedCountAtEnd;
-      cardEl.className = `hand-card hand-card--${kind} hand-card--mini${alreadyFlipped ? '' : ' judge-card-reveal'}`;
-      cardEl.innerHTML = cardArtSvg(kind);
+      cardEl.className = `hand-card hand-card--${card.kind} hand-card--mini${alreadyFlipped ? '' : ' judge-card-reveal'}`;
+      cardEl.innerHTML = cardArtSvg(card.kind, card.number);
       if (!alreadyFlipped) {
         const delay = REVEAL_START_DELAY + (idx - p.flippedCountAtEnd) * CARD_STAGGER;
         cardEl.style.animationDelay = `${delay}s`;

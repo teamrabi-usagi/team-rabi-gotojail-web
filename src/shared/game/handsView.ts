@@ -10,7 +10,9 @@
 import type { CardKind } from '../types.js';
 import type { GameState, PlayerGameState } from './state.js';
 
-export type HandCardView = { readonly revealed: true; readonly kind: CardKind; readonly flipped: boolean } | { readonly revealed: false };
+export type HandCardView =
+  | { readonly revealed: true; readonly kind: CardKind; readonly number: number | null; readonly flipped: boolean }
+  | { readonly revealed: false };
 
 export interface PlayerHandView {
   readonly playerId: string;
@@ -30,9 +32,9 @@ export interface HandsView {
   readonly hands: readonly PlayerHandView[];
 }
 
-function maskCard(kind: CardKind, flipped: boolean, isOwnHand: boolean): HandCardView {
+function maskCard(kind: CardKind, number: number | null, flipped: boolean, isOwnHand: boolean): HandCardView {
   if (!isOwnHand || flipped) {
-    return { revealed: true, kind, flipped };
+    return { revealed: true, kind, number, flipped };
   }
   return { revealed: false };
 }
@@ -45,7 +47,7 @@ function toHandViewForPlayer(player: PlayerGameState, viewerPlayerId: string): P
       playerId: player.playerId,
       seat: player.seat,
       cardCount: player.mainSeven.length,
-      cards: player.mainSeven.map((kind) => maskCard(kind, false, isOwnHand)),
+      cards: player.mainSeven.map((card) => maskCard(card.kind, card.number, false, isOwnHand)),
       flippedCount: 0,
       busted: false,
       bustedAtFlipIndex: null,
@@ -61,7 +63,7 @@ function toHandViewForPlayer(player: PlayerGameState, viewerPlayerId: string): P
     playerId: player.playerId,
     seat: player.seat,
     cardCount: player.hand.length,
-    cards: player.hand.map((kind, idx) => maskCard(kind, idx < flippedCount, isOwnHand)),
+    cards: player.hand.map((card, idx) => maskCard(card.kind, card.number, idx < flippedCount, isOwnHand)),
     flippedCount,
     busted: progress?.busted ?? false,
     bustedAtFlipIndex: progress?.bustedAtFlipIndex ?? null,

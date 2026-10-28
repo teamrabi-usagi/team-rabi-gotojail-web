@@ -13,6 +13,7 @@ import { renderGameEnd } from './gameEnd.js';
 export interface GameViewCallbacks extends LuckyPlacementCallbacks, ChatCallbacks {
   readonly onFlip: () => void;
   readonly onStop: () => void;
+  readonly onGuardEventRespond: (count: number) => void;
 }
 
 export interface GameViewLog {
@@ -78,6 +79,10 @@ export function renderGameView(
     const timerLabel = document.createElement('div');
     timerLabel.textContent = `残り時間: ${remainingSec}秒`;
     header.appendChild(timerLabel);
+  } else if (gameState.phase === 'round_active' && gameState.pendingGuardEvent !== null) {
+    const pausedLabel = document.createElement('div');
+    pausedLabel.textContent = '⏸ 看守イベントのため一時停止中';
+    header.appendChild(pausedLabel);
   }
 
   const tokensList = document.createElement('ul');
@@ -116,7 +121,52 @@ export function renderGameView(
     container.appendChild(placementContainer);
   }
 
-  if (gameState.phase === 'round_active') {
+  if (gameState.phase === 'round_active' && gameState.pendingGuardEvent !== null) {
+    const pending = gameState.pendingGuardEvent;
+    const isTarget = pending.targetPlayerId === selfPlayerId;
+    const directionLabel = pending.direction === 'left' ? '左隣' : '右隣';
+    const targetLabel = isTarget ? 'あなた' : `囚人${pending.targetPrisonerNumber}番 ${nameFor(names, pending.targetPlayerId)}`;
+    const neighborLabel = pending.neighborPlayerId === selfPlayerId ? 'あなた' : nameFor(names, pending.neighborPlayerId);
+
+    const panel = document.createElement('div');
+    panel.className = 'panel guard-event-panel';
+
+    const headline = document.createElement('div');
+    headline.className = 'guard-event-headline';
+    headline.textContent = '🔔 看守イベント発生!';
+    panel.appendChild(headline);
+
+    const cardText = document.createElement('div');
+    cardText.className = 'guard-event-card-text';
+    cardText.textContent = `「囚人番号${pending.targetPrisonerNumber}番!お前の${directionLabel}のプレイヤーはあと何枚捨てられる?嘘をついてもいいぞ」`;
+    panel.appendChild(cardText);
+
+    if (isTarget) {
+      const prompt = document.createElement('div');
+      prompt.textContent = `${neighborLabel}は、あと何枚捨てられますか?`;
+      panel.appendChild(prompt);
+
+      const row = document.createElement('div');
+      row.className = 'guard-event-response-row';
+      for (let count = 1; count <= 8; count++) {
+        const btn = document.createElement('button');
+        btn.className = 'chat-chip';
+        btn.textContent = String(count);
+        btn.addEventListener('click', () => callbacks.onGuardEventRespond(count));
+        row.appendChild(btn);
+      }
+      panel.appendChild(row);
+    } else {
+      const waiting = document.createElement('div');
+      waiting.className = 'guard-event-waiting';
+      waiting.textContent = `${targetLabel}の回答を待っています…`;
+      panel.appendChild(waiting);
+    }
+
+    container.appendChild(panel);
+  }
+
+  if (gameState.phase === 'round_active' && gameState.pendingGuardEvent === null) {
     const ownHand = handsView.hands.find((h) => h.playerId === selfPlayerId);
     const canAct = ownHand !== undefined && !ownHand.busted && !ownHand.stopped && ownHand.flippedCount < ownHand.cardCount;
 

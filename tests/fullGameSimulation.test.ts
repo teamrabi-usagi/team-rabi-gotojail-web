@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGameState, flipCard, submitLuckyPlacement } from '../src/shared/game/engine.js';
+import { createGameState, flipCard, respondToGuardEvent, submitLuckyPlacement } from '../src/shared/game/engine.js';
 import { forcedPosition } from '../src/shared/rules/luckyPlacement.js';
 import { STARTING_ZONE1, TOTAL_ROUNDS, type GameState } from '../src/shared/game/state.js';
 import { seededRng } from './rng.js';
@@ -55,6 +55,15 @@ describe('full 4-round game simulation', () => {
             expect(result.ok).toBe(true);
             anyFlipped = true;
             expect(totalTokens(state)).toBe(STARTING_ZONE1 * n);
+
+            // 看守マーク付きカードをめくると進行が一時停止するので、即座に(適当な回答で)解消する。
+            if (state.pendingGuardEvent !== null) {
+              now += 1;
+              const respondResult = respondToGuardEvent(state, state.pendingGuardEvent.targetPlayerId, 3, rng, now);
+              expect(respondResult.ok).toBe(true);
+              expect(totalTokens(state)).toBe(STARTING_ZONE1 * n);
+            }
+
             if (state.phase !== 'round_active') {
               break;
             }

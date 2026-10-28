@@ -13,11 +13,20 @@ export function isPlayerCount(n: number): n is PlayerCount {
 export type Rng = () => number;
 
 /** カード種類。「終了カード」は物理版専用の向き目印でデジタル版には存在しない。 */
-export type CardKind = 'plain' | 'lucky' | 'bomb';
+export type CardKind = 'plain' | 'guard' | 'lucky' | 'bomb';
 
 export function isSafeKind(kind: CardKind): boolean {
   return kind !== 'bomb';
 }
+
+/** 1枚のカード。安全側(plain/guard)は1〜5の番号付き。lucky/bombは番号なし(null)。 */
+export interface Card {
+  readonly kind: CardKind;
+  readonly number: number | null;
+}
+
+/** 隣人の方向。看守イベントで「右隣/左隣のプレイヤーについて答える」の指定に使う。 */
+export type NeighborDirection = 'left' | 'right';
 
 // ---------------------------------------------------------------------------
 // ルーム / プレイヤー（Phase 1の範囲）
@@ -79,7 +88,25 @@ export interface ClientToServerEvents {
   'game:flip': () => void;
   /** このラウンドはこれ以上めくらないと宣言する。 */
   'game:stop': () => void;
+  /** 看守イベントの対象者のみ。指定された隣人があと何枚捨てられるかを(嘘でもよい)回答する。 */
+  'game:guardEvent:respond': (payload: { count: number }) => void;
   'chat:send': (payload: { text: string }) => void;
+}
+
+export interface GuardEventTriggeredPayload {
+  readonly drawerPlayerId: string;
+  readonly targetPlayerId: string;
+  readonly targetPrisonerNumber: number;
+  readonly neighborPlayerId: string;
+  readonly direction: NeighborDirection;
+}
+
+export interface GuardEventResolvedPayload {
+  readonly targetPlayerId: string;
+  readonly neighborPlayerId: string;
+  readonly direction: NeighborDirection;
+  readonly count: number;
+  readonly message: string;
 }
 
 export interface ServerToClientEvents {
@@ -99,5 +126,9 @@ export interface ServerToClientEvents {
   'game:round:resolved': (payload: RoundResolvedSummary) => void;
   /** ルーム全員へ。4ラウンド終了時。同率優勝あり。 */
   'game:ended': (payload: { winnerIds: readonly string[] }) => void;
+  /** ルーム全員へ。看守マーク付きカードがめくられ、ラウンドが一時停止したことの公開イベント。 */
+  'game:guardEvent:triggered': (payload: GuardEventTriggeredPayload) => void;
+  /** ルーム全員へ。対象者が回答し、ラウンドが再開したことの公開イベント。 */
+  'game:guardEvent:resolved': (payload: GuardEventResolvedPayload) => void;
   'chat:message': (payload: ChatMessage) => void;
 }

@@ -10,10 +10,12 @@ import type { Rng } from '../../shared/types.js';
 import {
   createGameState,
   flipCard,
+  respondToGuardEvent,
   stop,
   submitLuckyPlacement,
   type EngineResult,
   type FlipCardResult,
+  type RespondToGuardEventResult,
   type StopResult,
 } from '../../shared/game/engine.js';
 import type { GameState } from '../../shared/game/state.js';
@@ -97,5 +99,13 @@ export class GameManager {
       return { ok: false, code: 'NO_GAME', message: 'このルームはまだゲームを開始していません' };
     }
     return stop(state, playerId, this.rng, now);
+  }
+
+  respondToGuardEvent(room: Room, playerId: string, count: number, now: number = Date.now()): RespondToGuardEventResult {
+    const state = this.games.get(room.code);
+    if (state === undefined) {
+      return { ok: false, code: 'NO_GAME', message: 'このルームはまだゲームを開始していません' };
+    }
+    return respondToGuardEvent(state, playerId, count, this.rng, now);
   }
 }

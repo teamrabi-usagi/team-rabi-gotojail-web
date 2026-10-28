@@ -6,7 +6,7 @@
  * flipCard / stop / tickRoundEnd / resolveRound / startNextRound / finishGame はPhase 3/4で追加する。
  */
 
-import type { CardKind, PlayerCount, Rng } from '../types.js';
+import type { Card, CardKind, NeighborDirection, PlayerCount, Rng } from '../types.js';
 import { isPlayerCount } from '../types.js';
 import { dealMainPool, sortSafeFirst } from '../rules/deck.js';
 import { forcedPosition, insertLuckyCard, isAllowedPosition, luckyRecipientSeat } from '../rules/luckyPlacement.js';
@@ -14,11 +14,13 @@ import { createInitialTokens, payAnte } from '../rules/tokens.js';
 import { anteAmountPerPlayer } from '../rules/ante.js';
 import { canFlip, createPlayerRoundProgress, flipNext, stopFlipping, type PlayerRoundProgress } from '../rules/flip.js';
 import { resolveRound, type RoundPlayerInput } from '../rules/roundResolution.js';
+import { buildGuardEventDeck, drawGuardEventCard } from '../rules/guardEventDeck.js';
 import {
   ROUND_TIMER_SECONDS,
   STARTING_ZONE1,
   TOTAL_ROUNDS,
   type GameState,
+  type PendingGuardEvent,
   type PlayerGameState,
   type RoundResolvedSummary,
 } from './state.js';
@@ -46,9 +48,15 @@ function getPlayer(state: GameState, playerId: string): PlayerGameState | undefi
   return state.players[playerId];
 }
 
+/** 座席seatから見た`direction`隣の座席。本プロジェクトの既存の慣習(luckyRecipientSeat)に合わせ、
+ * seat+1を「左隣」、seat-1を「右隣」とする。 */
+function neighborSeat(seat: number, n: number, direction: NeighborDirection): number {
+  return direction === 'left' ? (seat + 1) % n : (seat - 1 + n) % n;
+}
+
 /** 新しいGameStateを作り、1ラウンド目のround_setupまで進める。 */
 export function createGameState(playerIds: readonly string[], rng: Rng): GameState {
-  requirePlayerCount(playerIds.length);
+  const n = requirePlayerCount(playerIds.length);
 
   const players: Record<string, PlayerGameState> = {};
   playerIds.forEach((id, seat) => {
@@ -72,6 +80,8 @@ export function createGameState(playerIds: readonly string[], rng: Rng): GameSta
     bustOrder: [],
     roundTimerSeconds: ROUND_TIMER_SECONDS,
     roundEndsAt: null,
+    guardEventDeck: buildGuardEventDeck(n, rng),
+    pendingGuardEvent: null,
     winnerIds: null,
   };
 
@@ -87,6 +97,7 @@ export function setupRound(state: GameState, rng: Rng): void {
   state.phase = 'round_setup';
   state.bustOrder = [];
   state.roundEndsAt = null;
+  state.pendingGuardEvent = null;
 
   // 座(アンティ)の収集: 全員①から2個ずつ中央の座へ。持ち越し分に上乗せする。
   // ①が2未満で全額を払えない場合でも、実際に払えた分だけを座に加える(トークン保存則を守るため、
@@ -104,7 +115,7 @@ export function setupRound(state: GameState, rng: Rng): void {
   const { hands } = dealMainPool(n, rng);
   state.playerOrder.forEach((playerId, seat) => {
     const player = state.players[playerId] as PlayerGameState;
-    const dealt = hands[seat] as readonly CardKind[];
+    const dealt = hands[seat] as readonly Card[];
     player.mainSeven = sortSafeFirst(dealt);
     player.luckyPlacementPosition = null;
     player.hand = null;
@@ -189,6 +200,10 @@ export function finishRoundIfReady(state: GameState, rng: Rng, now: number, time
   if (state.phase !== 'round_active') {
     return null;
   }
+  // 看守イベントの回答待ちの間はラウンドを終了させない(対象者の回答でタイマーが再開してから判定する)。
+  if (state.pendingGuardEvent !== null) {
+    return null;
+  }
   if (!timedOut && !allPlayersDone(state)) {
     return null;
   }
@@ -261,19 +276,57 @@ export function finishGame(state: GameState): void {
   state.phase = 'game_end';
 }
 
+export interface TriggeredGuardEvent {
+  readonly drawerPlayerId: string;
+  readonly targetPlayerId: string;
+  readonly targetPrisonerNumber: number;
+  readonly neighborPlayerId: string;
+  readonly direction: NeighborDirection;
+}
+
 export type FlipCardResult =
   | {
       readonly ok: true;
       readonly outcome: 'safe' | 'bomb';
       readonly flippedKind: CardKind;
+      readonly guardEvent: TriggeredGuardEvent | null;
       readonly roundSummary: RoundResolvedSummary | null;
     }
   | { readonly ok: false; readonly code: string; readonly message: string };
+
+/** 看守マーク付きカードがめくられた瞬間の処理: イベントを1枚引き、進行を一時停止する。 */
+function triggerGuardEvent(state: GameState, drawerPlayerId: string, rng: Rng, now: number): TriggeredGuardEvent {
+  const n = requirePlayerCount(state.playerOrder.length);
+  const { card, deck } = drawGuardEventCard(state.guardEventDeck, rng);
+  state.guardEventDeck = deck;
+
+  const targetSeat = card.prisonerNumber - 1;
+  const targetPlayerId = state.playerOrder[targetSeat] as string;
+  const neighborPlayerId = state.playerOrder[neighborSeat(targetSeat, n, card.direction)] as string;
+
+  const pausedRemainingMs = state.roundEndsAt !== null ? Math.max(0, state.roundEndsAt - now) : 0;
+  state.roundEndsAt = null;
+
+  const pending: PendingGuardEvent = {
+    drawerPlayerId,
+    targetPlayerId,
+    targetPrisonerNumber: card.prisonerNumber,
+    neighborPlayerId,
+    direction: card.direction,
+    pausedRemainingMs,
+  };
+  state.pendingGuardEvent = pending;
+
+  return pending;
+}
 
 /** 自分の手札の次の1枚をめくる。手番の順序はない(各自好きなタイミングで呼べる)。 */
 export function flipCard(state: GameState, playerId: string, rng: Rng, now: number): FlipCardResult {
   if (state.phase !== 'round_active') {
     return fail('INVALID_PHASE', 'めくれるフェーズではありません');
+  }
+  if (state.pendingGuardEvent !== null) {
+    return fail('GUARD_EVENT_PENDING', '看守イベントの回答待ちです');
   }
 
   const player = getPlayer(state, playerId);
@@ -291,9 +344,14 @@ export function flipCard(state: GameState, playerId: string, rng: Rng, now: numb
     state.bustOrder.push(playerId);
   }
 
+  let guardEvent: TriggeredGuardEvent | null = null;
+  if (flipResult.outcome === 'safe' && flipResult.flippedCard.kind === 'guard') {
+    guardEvent = triggerGuardEvent(state, playerId, rng, now);
+  }
+
   const roundSummary = finishRoundIfReady(state, rng, now, false);
 
-  return { ok: true, outcome: flipResult.outcome, flippedKind: flipResult.flippedKind, roundSummary };
+  return { ok: true, outcome: flipResult.outcome, flippedKind: flipResult.flippedCard.kind, guardEvent, roundSummary };
 }
 
 export type StopResult =
@@ -304,6 +362,9 @@ export type StopResult =
 export function stop(state: GameState, playerId: string, rng: Rng, now: number): StopResult {
   if (state.phase !== 'round_active') {
     return fail('INVALID_PHASE', 'やめを宣言できるフェーズではありません');
+  }
+  if (state.pendingGuardEvent !== null) {
+    return fail('GUARD_EVENT_PENDING', '看守イベントの回答待ちです');
   }
 
   const player = getPlayer(state, playerId);
@@ -318,4 +379,43 @@ export function stop(state: GameState, playerId: string, rng: Rng, now: number):
   const roundSummary = finishRoundIfReady(state, rng, now, false);
 
   return { ok: true, roundSummary };
+}
+
+export interface ResolvedGuardEvent {
+  readonly targetPlayerId: string;
+  readonly neighborPlayerId: string;
+  readonly direction: NeighborDirection;
+  readonly count: number;
+}
+
+export type RespondToGuardEventResult =
+  | { readonly ok: true; readonly resolved: ResolvedGuardEvent; readonly roundSummary: RoundResolvedSummary | null }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+/** 看守イベントの対象者が、指定された隣人について「あと何枚捨てられるか」を回答する。回答した瞬間にタイマーが再開する。 */
+export function respondToGuardEvent(state: GameState, playerId: string, count: number, rng: Rng, now: number): RespondToGuardEventResult {
+  if (state.phase !== 'round_active') {
+    return fail('INVALID_PHASE', '看守イベントに回答できるフェーズではありません');
+  }
+  const pending = state.pendingGuardEvent;
+  if (pending === null) {
+    return fail('NO_PENDING_EVENT', '回答すべき看守イベントがありません');
+  }
+  if (pending.targetPlayerId !== playerId) {
+    return fail('NOT_YOUR_EVENT', 'このイベントの回答者はあなたではありません');
+  }
+  if (!Number.isInteger(count) || count < 0 || count > 8) {
+    return fail('INVALID_COUNT', '不正な回答です');
+  }
+
+  state.pendingGuardEvent = null;
+  state.roundEndsAt = now + pending.pausedRemainingMs;
+
+  const roundSummary = finishRoundIfReady(state, rng, now, false);
+
+  return {
+    ok: true,
+    resolved: { targetPlayerId: pending.targetPlayerId, neighborPlayerId: pending.neighborPlayerId, direction: pending.direction, count },
+    roundSummary,
+  };
 }

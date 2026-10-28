@@ -3,11 +3,11 @@
  * 典拠: docs/RULE_SPEC.md §ゲームの進行 / §ラッキーカード。
  */
 
-import type { CardKind } from '../types.js';
+import type { Card } from '../types.js';
 
 export interface PlayerRoundProgress {
   /** 8枚(7枚のメインカード+ラッキー1枚、挿入後)。固定のめくり順。 */
-  readonly hand: readonly CardKind[];
+  readonly hand: readonly Card[];
   readonly flippedCount: number;
   readonly busted: boolean;
   readonly bustedAtFlipIndex: number | null;
@@ -18,7 +18,7 @@ export interface PlayerRoundProgress {
   readonly weightedSafeCount: number;
 }
 
-export function createPlayerRoundProgress(hand: readonly CardKind[]): PlayerRoundProgress {
+export function createPlayerRoundProgress(hand: readonly Card[]): PlayerRoundProgress {
   return {
     hand,
     flippedCount: 0,
@@ -39,7 +39,7 @@ export type FlipOutcome = 'safe' | 'bomb';
 export interface FlipResult {
   readonly progress: PlayerRoundProgress;
   readonly outcome: FlipOutcome;
-  readonly flippedKind: CardKind;
+  readonly flippedCard: Card;
 }
 
 export function flipNext(progress: PlayerRoundProgress): FlipResult {
@@ -51,10 +51,10 @@ export function flipNext(progress: PlayerRoundProgress): FlipResult {
   }
 
   const index = progress.flippedCount;
-  const kind = progress.hand[index] as CardKind;
+  const card = progress.hand[index] as Card;
   const flippedCount = progress.flippedCount + 1;
 
-  if (kind === 'bomb') {
+  if (card.kind === 'bomb') {
     return {
       progress: {
         ...progress,
@@ -64,7 +64,7 @@ export function flipNext(progress: PlayerRoundProgress): FlipResult {
         luckyBonusPending: false,
       },
       outcome: 'bomb',
-      flippedKind: kind,
+      flippedCard: card,
     };
   }
 
@@ -77,10 +77,10 @@ export function flipNext(progress: PlayerRoundProgress): FlipResult {
       flippedCount,
       weightedSafeCount: progress.weightedSafeCount + contribution,
       // このカード自身がラッキーなら、次の安全フリップのためにボーナスを立てる。
-      luckyBonusPending: kind === 'lucky',
+      luckyBonusPending: card.kind === 'lucky',
     },
     outcome: 'safe',
-    flippedKind: kind,
+    flippedCard: card,
   };
 }
 
@@ -93,5 +93,5 @@ export function stopFlipping(progress: PlayerRoundProgress): PlayerRoundProgress
 
 /** 残っている(未オープンの)安全カードの枚数(ブランク+看守+ラッキー)。ラウンド勝者判定に使う。 */
 export function remainingSafeCount(progress: PlayerRoundProgress): number {
-  return progress.hand.slice(progress.flippedCount).filter((k) => k !== 'bomb').length;
+  return progress.hand.slice(progress.flippedCount).filter((c) => c.kind !== 'bomb').length;
 }

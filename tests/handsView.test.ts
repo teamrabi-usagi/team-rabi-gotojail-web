@@ -77,7 +77,7 @@ describe('toHandsView during round_active', () => {
     const firstCard = ownHandView.cards[0]!;
     expect(firstCard.revealed).toBe(true);
     if (firstCard.revealed) {
-      expect(firstCard.kind).toBe(result.flippedKind);
+      expect(firstCard.kind).toBe(result.flippedCard.kind);
       expect(firstCard.flipped).toBe(true);
     }
 

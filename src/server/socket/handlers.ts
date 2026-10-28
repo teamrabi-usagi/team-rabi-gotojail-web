@@ -209,6 +209,48 @@ export function registerSocketHandlers(
         return;
       }
 
+      if (result.guardEvent !== null) {
+        io.to(binding.room.code).emit('game:guardEvent:triggered', result.guardEvent);
+      }
+      if (result.roundSummary !== null) {
+        io.to(binding.room.code).emit('game:round:resolved', result.roundSummary);
+      }
+      broadcastGameStateRaw(io, store, gameManager, binding.room);
+      broadcastHandsView(io, store, gameManager, binding.room);
+      emitGameEndedIfNeeded(io, gameManager, binding.room);
+    });
+
+    socket.on('game:guardEvent:respond', async (payload) => {
+      const binding = store.getBySocket(socket.id);
+      if (binding === null) {
+        socket.emit('game:error', NOT_IN_ROOM_ERROR);
+        return;
+      }
+
+      const count = Number(payload?.count);
+      const result = gameManager.respondToGuardEvent(binding.room, binding.player.id, count);
+      if (!result.ok) {
+        socket.emit('game:error', { code: result.code, message: result.message });
+        return;
+      }
+
+      if (!(await persist(binding.room))) {
+        socket.emit('game:error', PERSISTENCE_FAILED_ERROR);
+        return;
+      }
+
+      const target = binding.room.players.find((p) => p.id === result.resolved.targetPlayerId);
+      const message =
+        result.resolved.direction === 'left'
+          ? `左隣のプレイヤーは、あと${result.resolved.count}枚は捨てられるはずです`
+          : `右隣のプレイヤーは、あと${result.resolved.count}枚は捨てられるはずです`;
+      io.to(binding.room.code).emit('game:guardEvent:resolved', {
+        targetPlayerId: result.resolved.targetPlayerId,
+        neighborPlayerId: result.resolved.neighborPlayerId,
+        direction: result.resolved.direction,
+        count: result.resolved.count,
+        message: `${target?.name ?? '(不明なプレイヤー)'}: ${message}`,
+      });
       if (result.roundSummary !== null) {
         io.to(binding.room.code).emit('game:round:resolved', result.roundSummary);
       }

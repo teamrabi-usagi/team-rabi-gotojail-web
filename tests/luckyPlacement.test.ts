@@ -8,7 +8,8 @@ import {
   luckyOwnerSeat,
   luckyRecipientSeat,
 } from '../src/shared/rules/luckyPlacement.js';
-import type { CardKind } from '../src/shared/types.js';
+import type { Card } from '../src/shared/types.js';
+import { card, cards } from './cardHelpers.js';
 
 describe('luckyRecipientSeat / luckyOwnerSeat', () => {
   it('wraps around using (seat+1)%n, and is the exact inverse of luckyOwnerSeat', () => {
@@ -28,19 +29,19 @@ describe('luckyRecipientSeat / luckyOwnerSeat', () => {
 
 describe('forcedPosition', () => {
   it('forces position 0 when the seven cards are all bombs', () => {
-    const allBombs: CardKind[] = ['bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const allBombs: Card[] = cards('bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
     expect(forcedPosition(allBombs)).toBe(0);
   });
 
   it('is null (free choice) for any hand with at least one safe card', () => {
-    const mixed: CardKind[] = ['plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const mixed: Card[] = cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
     expect(forcedPosition(mixed)).toBeNull();
   });
 });
 
 describe('isValidInsertionPosition / isAllowedPosition', () => {
-  const mixed: CardKind[] = ['plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
-  const allBombs: CardKind[] = ['bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+  const mixed: Card[] = cards('plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
+  const allBombs: Card[] = cards('bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
 
   it('allows 0..7 (INSERTION_SLOT_COUNT slots) for a mixed hand', () => {
     expect(INSERTION_SLOT_COUNT).toBe(8);
@@ -63,31 +64,31 @@ describe('isValidInsertionPosition / isAllowedPosition', () => {
 
 describe('insertLuckyCard', () => {
   it('inserts the lucky card at the given position, growing 7 cards to 8', () => {
-    const seven: CardKind[] = ['plain', 'plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const seven: Card[] = cards('plain', 'plain', 'plain', 'bomb', 'bomb', 'bomb', 'bomb');
     const result = insertLuckyCard(seven, 2);
-    expect(result).toEqual(['plain', 'plain', 'lucky', 'plain', 'bomb', 'bomb', 'bomb', 'bomb']);
+    expect(result).toEqual([...cards('plain', 'plain'), card('lucky'), ...cards('plain', 'bomb', 'bomb', 'bomb', 'bomb')]);
     expect(result).toHaveLength(8);
     // does not mutate input
     expect(seven).toHaveLength(7);
   });
 
   it('inserting at position 0 puts the lucky card first', () => {
-    const seven: CardKind[] = ['plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
-    expect(insertLuckyCard(seven, 0)).toEqual(['lucky', 'plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb']);
+    const seven: Card[] = cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
+    expect(insertLuckyCard(seven, 0)).toEqual([card('lucky'), ...cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb')]);
   });
 
   it('inserting at position 7 (end) puts the lucky card last', () => {
-    const seven: CardKind[] = ['plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
-    expect(insertLuckyCard(seven, 7)).toEqual(['plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'lucky']);
+    const seven: Card[] = cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
+    expect(insertLuckyCard(seven, 7)).toEqual([...cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'), card('lucky')]);
   });
 
   it('throws when the position is not allowed (forced-position violation)', () => {
-    const allBombs: CardKind[] = ['bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const allBombs: Card[] = cards('bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
     expect(() => insertLuckyCard(allBombs, 3)).toThrow();
   });
 
   it('throws for an out-of-range position', () => {
-    const seven: CardKind[] = ['plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb'];
+    const seven: Card[] = cards('plain', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb');
     expect(() => insertLuckyCard(seven, 8)).toThrow();
     expect(() => insertLuckyCard(seven, -1)).toThrow();
   });

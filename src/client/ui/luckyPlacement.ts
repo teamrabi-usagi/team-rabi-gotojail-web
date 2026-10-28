@@ -7,7 +7,7 @@
  */
 
 import type { HandsView } from '../../shared/game/handsView.js';
-import type { CardKind, PlayerCount } from '../../shared/types.js';
+import type { Card, PlayerCount } from '../../shared/types.js';
 import { forcedPosition, luckyRecipientSeat } from '../../shared/rules/luckyPlacement.js';
 import { cardArtSvg } from './cardArt.js';
 
@@ -44,7 +44,7 @@ export function renderLuckyPlacement(
   }
 
   // 対象の手札は自分のものではないので、round_setup中は常に revealed:true のはず。
-  const kinds: CardKind[] = recipientHand.cards.map((c) => (c.revealed ? c.kind : 'bomb'));
+  const cards: Card[] = recipientHand.cards.map((c) => (c.revealed ? { kind: c.kind, number: c.number } : { kind: 'bomb', number: null }));
   const recipientName = names.get(recipientHand.playerId) ?? '(不明なプレイヤー)';
 
   const title = document.createElement('div');
@@ -54,7 +54,7 @@ export function renderLuckyPlacement(
   const row = document.createElement('div');
   row.className = 'lucky-placement-row';
 
-  const forced = forcedPosition(kinds);
+  const forced = forcedPosition(cards);
 
   const makeSlotButton = (position: number): HTMLButtonElement => {
     const slot = document.createElement('button');
@@ -66,10 +66,10 @@ export function renderLuckyPlacement(
   };
 
   row.appendChild(makeSlotButton(0));
-  kinds.forEach((kind, idx) => {
+  cards.forEach((card, idx) => {
     const cardEl = document.createElement('div');
-    cardEl.className = `hand-card hand-card--${kind} hand-card--mini`;
-    cardEl.innerHTML = cardArtSvg(kind);
+    cardEl.className = `hand-card hand-card--${card.kind} hand-card--mini`;
+    cardEl.innerHTML = cardArtSvg(card.kind, card.number);
     row.appendChild(cardEl);
     row.appendChild(makeSlotButton(idx + 1));
   });

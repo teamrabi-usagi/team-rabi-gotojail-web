@@ -80,6 +80,7 @@ function showGameView(): void {
       onSubmit: (position) => socket.emit('game:luckyPlacement:submit', { position }),
       onFlip: () => socket.emit('game:flip'),
       onStop: () => socket.emit('game:stop'),
+      onGuardEventRespond: (count) => socket.emit('game:guardEvent:respond', { count }),
       onSend: (text) => socket.emit('chat:send', { text }),
     },
   );
@@ -152,6 +153,10 @@ socket.on('game:ended', (payload) => {
 
 socket.on('chat:message', (message) => {
   showBluffToast(message.playerId, message.text);
+});
+
+socket.on('game:guardEvent:resolved', (payload) => {
+  showBluffToast(payload.targetPlayerId, payload.message);
 });
 
 socket.on('room:error', (err) => {

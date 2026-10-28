@@ -84,7 +84,7 @@ describe('submitLuckyPlacement', () => {
     expect(result.ok).toBe(true);
     expect(recipient.hand).toHaveLength(8);
     expect(recipient.luckyPlacementPosition).toBe(position);
-    expect(recipient.hand?.[position]).toBe('lucky');
+    expect(recipient.hand?.[position]?.kind).toBe('lucky');
     expect(recipient.progress).not.toBeNull();
   });
 

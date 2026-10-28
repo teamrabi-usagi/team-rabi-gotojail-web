@@ -28,7 +28,7 @@ function renderCard(view: PlayerHandView['cards'][number], isMini: boolean, just
   const sizeClass = isMini ? 'hand-card--mini' : '';
   if (view.revealed) {
     el.className = `hand-card hand-card--${view.kind} ${sizeClass}${view.flipped ? ' hand-card--flipped' : ''}${justRevealed ? ' hand-card--discard-anim' : ''}`.trim();
-    el.innerHTML = cardArtSvg(view.kind);
+    el.innerHTML = cardArtSvg(view.kind, view.number);
   } else {
     el.className = `hand-card hand-card--hidden ${sizeClass}`.trim();
     el.innerHTML = cardArtSvg('hidden');

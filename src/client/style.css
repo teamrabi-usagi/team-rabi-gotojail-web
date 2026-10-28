@@ -691,3 +691,34 @@ button.secondary {
     transform: translateY(0);
   }
 }
+
+.guard-event-panel {
+  border: 2px solid #6a5a9e;
+  text-align: center;
+}
+
+.guard-event-headline {
+  font-weight: bold;
+  color: #a594d6;
+  margin-bottom: 6px;
+  font-size: 1.05rem;
+}
+
+.guard-event-card-text {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.guard-event-waiting {
+  font-size: 0.85rem;
+  color: #c9b8a2;
+}
+
+.guard-event-response-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}

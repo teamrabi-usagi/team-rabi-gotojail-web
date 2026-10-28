@@ -1,6 +1,6 @@
 /**
  * カード種別ごとのプレースホルダー画像(インラインSVG)。
- * 外部アセット無し、`CardKind | 'hidden'` から直接SVG文字列を生成する。
+ * 外部アセット無し、`CardKind | 'hidden'` + 番号(1〜5、安全カードのみ)から直接SVG文字列を生成する。
  */
 
 import type { CardKind } from '../../shared/types.js';
@@ -14,6 +14,13 @@ function frame(fill: string, stroke: string): string {
   return CARD_FRAME.replace('FILL', fill).replace('STROKE', stroke);
 }
 
+function numberGlyph(number: number | null, color: string): string {
+  if (number === null) {
+    return '';
+  }
+  return `<text x="30" y="58" text-anchor="middle" font-size="32" font-weight="bold" fill="${color}" font-family="sans-serif">${number}</text>`;
+}
+
 function hiddenArt(): string {
   return `
     ${frame('#241a13', '#5a4636')}
@@ -25,12 +32,18 @@ function hiddenArt(): string {
   `;
 }
 
-function plainArt(): string {
+function plainArt(number: number | null): string {
   return `
     ${frame('#e8dcc4', '#6fa96f')}
-    <rect x="16" y="20" width="28" height="44" rx="3" fill="none" stroke="#6fa96f" stroke-width="3"/>
-    <line x1="16" y1="42" x2="44" y2="42" stroke="#6fa96f" stroke-width="2"/>
-    <circle cx="39" cy="42" r="2" fill="#6fa96f"/>
+    ${numberGlyph(number, '#4a7a4a')}
+  `;
+}
+
+function guardArt(number: number | null): string {
+  return `
+    ${frame('#e6e0ee', '#6a5a9e')}
+    <path d="M13 9 L22 12.5 V22 C22 29.5 18 35 13 37.5 C8 35 4 29.5 4 22 V12.5 Z" fill="none" stroke="#6a5a9e" stroke-width="2.2"/>
+    ${numberGlyph(number, '#6a5a9e')}
   `;
 }
 
@@ -55,12 +68,14 @@ function bombArt(): string {
   `;
 }
 
-function artFor(kind: CardArtKind): string {
+function artFor(kind: CardArtKind, number: number | null): string {
   switch (kind) {
     case 'hidden':
       return hiddenArt();
     case 'plain':
-      return plainArt();
+      return plainArt(number);
+    case 'guard':
+      return guardArt(number);
     case 'lucky':
       return luckyArt();
     case 'bomb':
@@ -68,7 +83,7 @@ function artFor(kind: CardArtKind): string {
   }
 }
 
-/** `kind`のプレースホルダーカード画像(SVG)をHTML文字列で返す。 */
-export function cardArtSvg(kind: CardArtKind): string {
-  return `<svg viewBox="${CARD_VIEWBOX}" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">${artFor(kind)}</svg>`;
+/** `kind`(+安全カードなら1〜5の`number`)のプレースホルダーカード画像(SVG)をHTML文字列で返す。 */
+export function cardArtSvg(kind: CardArtKind, number: number | null = null): string {
+  return `<svg viewBox="${CARD_VIEWBOX}" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">${artFor(kind, number)}</svg>`;
 }
