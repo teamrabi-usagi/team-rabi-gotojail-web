@@ -17,7 +17,7 @@ services:
     type: web
     runtime: node
     plan: free
-    branch: main
+    branch: master
     buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
