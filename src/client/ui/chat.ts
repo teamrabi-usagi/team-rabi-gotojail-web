@@ -65,7 +65,7 @@ export function renderChat(container: HTMLElement, targets: readonly ChatTarget[
 
   const countRow = document.createElement('div');
   countRow.className = 'chat-count-row';
-  for (let count = 0; count <= MAX_COUNT; count++) {
+  for (let count = 1; count <= MAX_COUNT; count++) {
     const btn = document.createElement('button');
     btn.className = `chat-chip${selectedCount === count ? ' chat-chip--active' : ''}`;
     btn.textContent = String(count);

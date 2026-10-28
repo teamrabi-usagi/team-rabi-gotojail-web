@@ -32,6 +32,9 @@ h1 {
 }
 
 .phase-badge {
+  position: sticky;
+  top: 8px;
+  z-index: 50;
   display: block;
   width: fit-content;
   margin: -12px auto 16px;
@@ -42,6 +45,40 @@ h1 {
   font-weight: bold;
   font-size: 0.85rem;
   text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  transition: background-color 0.4s ease;
+}
+
+.phase-badge--round_setup {
+  background: var(--color-accent);
+}
+
+.phase-badge--round_active {
+  background: var(--color-safe);
+}
+
+.phase-badge--round_end {
+  background: #d98a3d;
+}
+
+.phase-badge--game_end {
+  background: #b07cc6;
+}
+
+@keyframes phaseBadgeFlash {
+  0% {
+    transform: scale(1.35);
+  }
+  40% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.phase-badge--flash {
+  animation: phaseBadgeFlash 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .panel {

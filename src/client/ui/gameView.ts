@@ -27,6 +27,9 @@ const PHASE_LABELS: Record<PublicGameState['phase'], string> = {
   game_end: '④ 結果発表',
 };
 
+/** 直前に描画したフェーズ。フェーズが実際に変わった瞬間だけ色フラッシュを出すための判定に使う。 */
+let lastRenderedPhase: PublicGameState['phase'] | null = null;
+
 function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
   return names.get(playerId) ?? '(不明なプレイヤー)';
 }
@@ -46,8 +49,11 @@ export function renderGameView(
   title.textContent = '🔒 GOTOJAIL!(刑務所に行け!)';
   container.appendChild(title);
 
+  const phaseChanged = lastRenderedPhase !== null && lastRenderedPhase !== gameState.phase;
+  lastRenderedPhase = gameState.phase;
+
   const phaseBadge = document.createElement('div');
-  phaseBadge.className = 'phase-badge';
+  phaseBadge.className = `phase-badge phase-badge--${gameState.phase}${phaseChanged ? ' phase-badge--flash' : ''}`;
   phaseBadge.textContent = PHASE_LABELS[gameState.phase];
   container.appendChild(phaseBadge);
 
