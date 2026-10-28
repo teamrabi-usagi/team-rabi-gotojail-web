@@ -4,9 +4,9 @@
  *
  * 自由入力ではなく、「誰(囚人番号)へ」「あと何枚は捨てられる(安全)と伝えるか」を
  * ボタンだけで組み立てて送る。選択状態はこのモジュール内に保持し、送信後にリセットする。
+ * 送信されたメッセージ自体は一覧表示せず、円卓の送信者の真上にふわっと浮かぶトースト
+ * (main.tsの`showBluffToast`)として見せる。
  */
-
-import type { ChatMessage } from '../../shared/types.js';
 
 export interface ChatCallbacks {
   readonly onSend: (text: string) => void;
@@ -23,38 +23,13 @@ const MAX_COUNT = 8;
 let selectedTargetId: string | null = null;
 let selectedCount: number | null = null;
 
-function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
-  return names.get(playerId) ?? '(不明なプレイヤー)';
+export function composeBluffMessage(target: ChatTarget, count: number): string {
+  return `囚人番号${target.prisonerNumber}番!あと${count}枚は捨てられるぞ…!`;
 }
 
-export function renderChat(
-  container: HTMLElement,
-  messages: readonly ChatMessage[],
-  selfPlayerId: string,
-  names: ReadonlyMap<string, string>,
-  targets: readonly ChatTarget[],
-  callbacks: ChatCallbacks,
-): void {
+export function renderChat(container: HTMLElement, targets: readonly ChatTarget[], callbacks: ChatCallbacks): void {
   container.innerHTML = '';
   container.className = 'panel chat-panel';
-
-  const list = document.createElement('div');
-  list.className = 'chat-messages';
-  for (const msg of messages) {
-    const line = document.createElement('div');
-    line.className = 'chat-line';
-    const isSelf = msg.playerId === selfPlayerId;
-    const nameSpan = document.createElement('span');
-    nameSpan.className = isSelf ? 'you' : '';
-    nameSpan.textContent = `${isSelf ? 'あなた' : nameFor(names, msg.playerId)}: `;
-    line.appendChild(nameSpan);
-    const textSpan = document.createElement('span');
-    textSpan.textContent = msg.text;
-    line.appendChild(textSpan);
-    list.appendChild(line);
-  }
-  container.appendChild(list);
-  list.scrollTop = list.scrollHeight;
 
   // 選択済みのtargetがもういない(退室等)場合はリセットする。
   if (selectedTargetId !== null && !targets.some((t) => t.playerId === selectedTargetId)) {
@@ -77,7 +52,7 @@ export function renderChat(
     btn.textContent = `囚人${target.prisonerNumber}番 ${target.name}`;
     btn.addEventListener('click', () => {
       selectedTargetId = target.playerId;
-      renderChat(container, messages, selfPlayerId, names, targets, callbacks);
+      renderChat(container, targets, callbacks);
     });
     targetRow.appendChild(btn);
   }
@@ -96,7 +71,7 @@ export function renderChat(
     btn.textContent = String(count);
     btn.addEventListener('click', () => {
       selectedCount = count;
-      renderChat(container, messages, selfPlayerId, names, targets, callbacks);
+      renderChat(container, targets, callbacks);
     });
     countRow.appendChild(btn);
   }
@@ -113,10 +88,10 @@ export function renderChat(
     if (target === undefined) {
       return;
     }
-    callbacks.onSend(`囚人${target.prisonerNumber}番(${target.name})へ: あと${selectedCount}枚は捨てられるはずです`);
+    callbacks.onSend(composeBluffMessage(target, selectedCount));
     selectedTargetId = null;
     selectedCount = null;
-    renderChat(container, messages, selfPlayerId, names, targets, callbacks);
+    renderChat(container, targets, callbacks);
   });
   form.appendChild(sendButton);
 

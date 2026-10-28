@@ -17,6 +17,12 @@ function nameFor(names: ReadonlyMap<string, string>, playerId: string): string {
   return names.get(playerId) ?? '(不明なプレイヤー)';
 }
 
+/** プレイヤーを表す簡易ミープル風アイコン(色はCSSの`color`で制御)。 */
+const MEEPLE_SVG =
+  '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">' +
+  '<path d="M20 5c-4 0-6.5 3-6.5 6.5 0 2 .9 3.8 2 5-5 1.8-7.8 5.8-8.7 11-.6 3.3 1.7 6.5 5 6.5h16.4c3.3 0 5.6-3.2 5-6.5-.9-5.2-3.7-9.2-8.7-11 1.1-1.2 2-3 2-5C26.5 8 24 5 20 5z" fill="currentColor"/>' +
+  '</svg>';
+
 function renderCard(view: PlayerHandView['cards'][number], isMini: boolean, justRevealed: boolean): HTMLElement {
   const el = document.createElement('div');
   const sizeClass = isMini ? 'hand-card--mini' : '';
@@ -33,12 +39,18 @@ function renderCard(view: PlayerHandView['cards'][number], isMini: boolean, just
 function renderSeat(hand: PlayerHandView, isSelf: boolean, names: ReadonlyMap<string, string>): HTMLElement {
   const seatEl = document.createElement('div');
   seatEl.className = `table-seat${isSelf ? ' you' : ''}`;
+  seatEl.dataset.playerId = hand.playerId;
 
   const label = document.createElement('div');
   label.className = 'table-seat-label';
   const statusSuffix = hand.busted ? '(脱落)' : hand.stopped ? '(停止)' : '';
   label.textContent = `${isSelf ? 'あなた' : nameFor(names, hand.playerId)}${statusSuffix}`;
   seatEl.appendChild(label);
+
+  const meeple = document.createElement('div');
+  meeple.className = 'table-seat-meeple';
+  meeple.innerHTML = MEEPLE_SVG;
+  seatEl.appendChild(meeple);
 
   const cardsEl = document.createElement('div');
   cardsEl.className = 'table-seat-cards';

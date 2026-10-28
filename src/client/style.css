@@ -157,6 +157,23 @@ button.secondary {
   background: rgba(224, 169, 74, 0.2);
 }
 
+.table-seat-meeple {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 4px;
+  color: #8a7257;
+}
+
+.table-seat.you .table-seat-meeple {
+  color: var(--color-accent);
+}
+
+.table-seat-meeple svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .table-seat-cards {
   display: flex;
   flex-wrap: wrap;
@@ -328,4 +345,47 @@ button.secondary {
 .chat-form > button:last-child {
   margin-top: 4px;
   margin-bottom: 0;
+}
+
+#bluff-toast-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.bluff-toast {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: rgba(42, 31, 24, 0.95);
+  border: 1px solid var(--color-accent);
+  color: var(--color-text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  max-width: 220px;
+  text-align: center;
+  white-space: normal;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  animation: bluffToastFloat 3.4s ease forwards;
+}
+
+@keyframes bluffToastFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -70%);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -110%);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -120%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -145%);
+  }
 }

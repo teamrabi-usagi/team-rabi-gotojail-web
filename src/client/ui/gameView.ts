@@ -4,7 +4,6 @@
 
 import type { PublicGameState } from '../../shared/game/publicState.js';
 import type { HandsView } from '../../shared/game/handsView.js';
-import type { ChatMessage } from '../../shared/types.js';
 import type { RoundResolvedSummary } from '../../shared/game/state.js';
 import { renderHandsView } from './handsView.js';
 import { renderLuckyPlacement, renderWaitingForOthersLuckyPlacement, type LuckyPlacementCallbacks } from './luckyPlacement.js';
@@ -17,7 +16,6 @@ export interface GameViewCallbacks extends LuckyPlacementCallbacks, ChatCallback
 
 export interface GameViewLog {
   readonly roundSummaries: readonly RoundResolvedSummary[];
-  readonly chatMessages: readonly ChatMessage[];
   readonly winnerIds: readonly string[] | null;
 }
 
@@ -162,6 +160,6 @@ export function renderGameView(
     .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
 
   const chatContainer = document.createElement('div');
-  renderChat(chatContainer, log.chatMessages, selfPlayerId, names, targets, callbacks);
+  renderChat(chatContainer, targets, callbacks);
   container.appendChild(chatContainer);
 }

@@ -2,13 +2,14 @@
  * 接続・イベント配線。`room:state`/`game:state`/`game:handsView`を受けて描画を更新する。
  */
 
-import type { ChatMessage, PublicRoomState, SelfIdentity } from '../shared/types.js';
+import type { PublicRoomState, SelfIdentity } from '../shared/types.js';
 import type { PublicGameState } from '../shared/game/publicState.js';
 import type { HandsView } from '../shared/game/handsView.js';
 import type { RoundResolvedSummary } from '../shared/game/state.js';
 import { createSocket, loadSession, saveSession, clearSession, type AppSocket } from './socket.js';
 import { renderLobbyForm, renderReconnecting, renderWaitingRoom } from './ui/lobby.js';
 import { renderGameView } from './ui/gameView.js';
+import { showBluffToast } from './ui/bluffToast.js';
 
 const appRoot = document.getElementById('app');
 if (appRoot === null) {
@@ -23,7 +24,6 @@ let currentHandsView: HandsView | null = null;
 let winnerIds: readonly string[] | null = null;
 
 const roundSummaries: RoundResolvedSummary[] = [];
-const chatMessages: ChatMessage[] = [];
 
 function namesMap(): ReadonlyMap<string, string> {
   const map = new Map<string, string>();
@@ -74,7 +74,7 @@ function showGameView(): void {
     currentHandsView,
     self.playerId,
     namesMap(),
-    { roundSummaries, chatMessages, winnerIds },
+    { roundSummaries, winnerIds },
     {
       onSubmit: (position) => socket.emit('game:luckyPlacement:submit', { position }),
       onFlip: () => socket.emit('game:flip'),
@@ -147,8 +147,7 @@ socket.on('game:ended', (payload) => {
 });
 
 socket.on('chat:message', (message) => {
-  chatMessages.push(message);
-  render();
+  showBluffToast(message.playerId, message.text);
 });
 
 socket.on('room:error', (err) => {
