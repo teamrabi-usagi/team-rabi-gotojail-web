@@ -90,6 +90,14 @@ export function renderGameView(
 
   container.appendChild(header);
 
+  const targets: ChatTarget[] = gameState.players
+    .filter((p) => p.playerId !== selfPlayerId)
+    .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
+
+  const chatContainer = document.createElement('div');
+  renderChat(chatContainer, targets, callbacks);
+  container.appendChild(chatContainer);
+
   if (gameState.phase === 'round_setup') {
     const placementContainer = document.createElement('div');
     if (gameState.pendingLuckyPlacementOwners.includes(selfPlayerId)) {
@@ -154,12 +162,4 @@ export function renderGameView(
     }
     container.appendChild(eventLog);
   }
-
-  const targets: ChatTarget[] = gameState.players
-    .filter((p) => p.playerId !== selfPlayerId)
-    .map((p) => ({ playerId: p.playerId, name: nameFor(names, p.playerId), prisonerNumber: p.seat + 1 }));
-
-  const chatContainer = document.createElement('div');
-  renderChat(chatContainer, targets, callbacks);
-  container.appendChild(chatContainer);
 }

@@ -1,7 +1,7 @@
 /**
  * 手札ビュー(`game:handsView`)の描画。
  *
- * 円卓レイアウト: 自分を常に下(6時の位置)に固定し、他プレイヤーを座席順に
+ * 円卓レイアウト: 自分を常に上(12時の位置)に固定し、他プレイヤーを座席順に
  * 円周上へ配置する。カードはプレースホルダー画像(cardArt.ts)で表示し、
  * 新たにめくられたカードにだけ「捨てた」アニメーションを1回だけ適用する
  * (直前との`flippedCount`差分で判定。タイマー等の無関係な再描画では再生しない)。
@@ -87,7 +87,7 @@ export function renderHandsView(container: HTMLElement, view: HandsView, selfPla
     const seatEl = renderSeat(hand, isSelf, names);
 
     const offset = selfIndex === -1 ? i : i - selfIndex;
-    const angle = Math.PI / 2 + (2 * Math.PI * offset) / n;
+    const angle = -Math.PI / 2 + (2 * Math.PI * offset) / n;
     const cx = 50 + 40 * Math.cos(angle);
     const cy = 50 + 40 * Math.sin(angle);
     seatEl.style.left = `${cx}%`;
