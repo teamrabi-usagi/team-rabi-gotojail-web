@@ -196,6 +196,7 @@ button.secondary {
   position: relative;
   left: 50%;
   transform: translateX(-50%);
+  perspective: 500px;
 }
 
 .lucky-placement-row {
@@ -206,6 +207,7 @@ button.secondary {
   overflow-x: auto;
   padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
+  perspective: 500px;
 }
 
 .lucky-placement-row .hand-card,
@@ -251,22 +253,23 @@ button.secondary {
   opacity: 0.75;
 }
 
-@keyframes cardDiscard {
+@keyframes cardFlip {
   0% {
-    transform: scale(1) rotate(0deg);
+    transform: rotateY(-100deg) scale(1.08);
   }
-  45% {
-    transform: scale(1.3) rotate(-10deg);
+  60% {
+    transform: rotateY(12deg) scale(1.08);
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: rotateY(0deg) scale(1);
   }
 }
 
 .hand-card--discard-anim {
-  animation: cardDiscard 0.5s ease;
+  animation: cardFlip 0.45s cubic-bezier(0.34, 1.1, 0.64, 1);
   position: relative;
   z-index: 1;
+  transform-style: preserve-3d;
 }
 
 .lucky-slot {
@@ -531,5 +534,123 @@ button.secondary {
   100% {
     opacity: 0;
     transform: translate(-50%, -145%);
+  }
+}
+
+.judge-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.judge-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  opacity: 0;
+  animation: judgeBackdropIn 0.4s ease forwards;
+}
+
+@keyframes judgeBackdropIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.judge-modal {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-panel);
+  border: 2px solid var(--color-accent);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.judge-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+  opacity: 0;
+  transform: scale(0.6);
+  animation: judgeTitleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  margin-bottom: 16px;
+}
+
+@keyframes judgeTitleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.judge-hands {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.judge-player-name {
+  font-weight: bold;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.judge-cards {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  justify-content: flex-start;
+  perspective: 500px;
+}
+
+@keyframes judgeCardReveal {
+  0% {
+    opacity: 0;
+    transform: rotateY(-100deg) scale(1.08);
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    transform: rotateY(12deg) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+.judge-card-reveal {
+  animation: judgeCardReveal 0.45s cubic-bezier(0.34, 1.1, 0.64, 1) both;
+  transform-style: preserve-3d;
+}
+
+.judge-announcement {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-accent);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: judgeAnnounceIn 0.5s ease forwards;
+}
+
+@keyframes judgeAnnounceIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

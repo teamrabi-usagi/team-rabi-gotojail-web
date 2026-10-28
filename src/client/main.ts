@@ -10,6 +10,7 @@ import { createSocket, loadSession, saveSession, clearSession, type AppSocket } 
 import { renderLobbyForm, renderReconnecting, renderWaitingRoom } from './ui/lobby.js';
 import { renderGameView } from './ui/gameView.js';
 import { showBluffToast } from './ui/bluffToast.js';
+import { showRoundJudge } from './ui/roundJudge.js';
 
 const appRoot = document.getElementById('app');
 if (appRoot === null) {
@@ -137,6 +138,9 @@ socket.on('game:handsView', (handsView) => {
 });
 
 socket.on('game:round:resolved', (summary) => {
+  if (self !== null && currentGameState !== null) {
+    showRoundJudge(summary, currentGameState.players, self.playerId, namesMap());
+  }
   roundSummaries.push(summary);
   render();
 });

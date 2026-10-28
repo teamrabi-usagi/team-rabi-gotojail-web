@@ -205,6 +205,11 @@ export function finishRoundIfReady(state: GameState, rng: Rng, now: number, time
 
   const summaryPlayers = result.players.map((pr) => {
     const player = state.players[pr.playerId] as PlayerGameState;
+    // setupRound/finishGame(下)がこの後player.hand/progressを次ラウンド用に上書きするため、
+    // 一斉公開演出に使う「このラウンドの最終的な8枚」はここで(上書き前に)捕捉しておく。
+    const finalHand = player.hand ?? [];
+    const flippedCountAtEnd = player.progress?.flippedCount ?? 0;
+    const busted = player.progress?.busted ?? false;
     player.tokens = pr.tokens;
     return {
       playerId: pr.playerId,
@@ -213,6 +218,9 @@ export function finishRoundIfReady(state: GameState, rng: Rng, now: number, time
       safeFlipConversion: pr.safeFlipConversion,
       roundWinnerBonusApplied: pr.roundWinnerBonusApplied,
       antePayout: pr.antePayout,
+      finalHand,
+      flippedCountAtEnd,
+      busted,
     };
   });
 

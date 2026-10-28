@@ -35,6 +35,11 @@ export interface RoundResolvedPlayerSummary {
   readonly safeFlipConversion: number;
   readonly roundWinnerBonusApplied: boolean;
   readonly antePayout: number;
+  /** このラウンドで実際に配られていた8枚(めくっていなかった分も含む)。終了時の一斉公開演出専用。 */
+  readonly finalHand: readonly CardKind[];
+  /** このラウンド中に実際にめくっていた枚数。これより後ろは終了時に初公開される。 */
+  readonly flippedCountAtEnd: number;
+  readonly busted: boolean;
 }
 
 export interface RoundResolvedSummary {
