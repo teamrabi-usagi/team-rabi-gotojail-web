@@ -8,6 +8,7 @@ import type { RoundResolvedSummary } from '../../shared/game/state.js';
 import { renderHandsView } from './handsView.js';
 import { renderLuckyPlacement, renderWaitingForOthersLuckyPlacement, type LuckyPlacementCallbacks } from './luckyPlacement.js';
 import { renderChat, type ChatCallbacks, type ChatTarget } from './chat.js';
+import { renderGameEnd } from './gameEnd.js';
 
 export interface GameViewCallbacks extends LuckyPlacementCallbacks, ChatCallbacks {
   readonly onFlip: () => void;
@@ -51,20 +52,7 @@ export function renderGameView(
   container.appendChild(phaseBadge);
 
   if (log.winnerIds !== null) {
-    const banner = document.createElement('div');
-    banner.className = 'panel game-end-banner';
-    const isSelfWinner = log.winnerIds.includes(selfPlayerId);
-    const winnerNames = log.winnerIds.map((id) => (id === selfPlayerId ? 'あなた' : nameFor(names, id))).join(', ');
-    banner.textContent = isSelfWinner ? '🎉 無罪放免!あなたの勝利です!' : `ゲーム終了。勝者: ${winnerNames}`;
-    container.appendChild(banner);
-    const final = document.createElement('div');
-    final.className = 'panel';
-    for (const p of gameState.players) {
-      const line = document.createElement('div');
-      line.textContent = `${p.playerId === selfPlayerId ? 'あなた' : nameFor(names, p.playerId)}: 残り刑期①${p.zone1}`;
-      final.appendChild(line);
-    }
-    container.appendChild(final);
+    renderGameEnd(container, gameState, selfPlayerId, names, log.winnerIds);
     return;
   }
 
