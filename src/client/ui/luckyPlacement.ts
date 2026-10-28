@@ -68,7 +68,7 @@ export function renderLuckyPlacement(
   row.appendChild(makeSlotButton(0));
   kinds.forEach((kind, idx) => {
     const cardEl = document.createElement('div');
-    cardEl.className = `hand-card hand-card--${kind}`;
+    cardEl.className = `hand-card hand-card--${kind} hand-card--mini`;
     cardEl.innerHTML = cardArtSvg(kind);
     row.appendChild(cardEl);
     row.appendChild(makeSlotButton(idx + 1));

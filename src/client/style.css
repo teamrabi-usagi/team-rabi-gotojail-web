@@ -157,13 +157,27 @@ button.secondary {
   background: rgba(224, 169, 74, 0.2);
 }
 
-.table-seat-cards,
-.lucky-placement-row {
+.table-seat-cards {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 3px;
+}
+
+.lucky-placement-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lucky-placement-row .hand-card,
+.lucky-placement-row .lucky-slot {
+  flex: 0 0 auto;
 }
 
 .hand-card {
@@ -224,9 +238,10 @@ button.secondary {
 
 .lucky-slot {
   width: auto;
-  padding: 8px 6px;
+  padding: 6px 8px;
   margin: 0;
   background: var(--color-accent);
+  font-size: 0.85rem;
 }
 
 .lucky-placement-note {
